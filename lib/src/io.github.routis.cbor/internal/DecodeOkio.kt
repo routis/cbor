@@ -80,15 +80,16 @@ private fun BufferedSource.readByteString(byteCount: ULong): DataItem.ByteString
 
 private fun BufferedSource.readTextStringUntilBreak(): DataItem.TextString {
 
-    val bytes = buildList {
-        do {
-            val byte = readByte()
-            val isBreak = DataItemOrBreak.isBreak(byte.toUByte())
-            byte.takeUnless { isBreak }?.let(::add)
-        } while (!isBreak)
-    }.toByteArray()
-
-    return DataItem.TextString(String(bytes))
+    var value = ""
+    do {
+        val dataItemOrBreak = readDataItemOrBreak()
+        if (dataItemOrBreak is DataItemOrBreak.Item) {
+            val item = dataItemOrBreak.item
+            require(item is DataItem.TextString)
+            value += item.value
+        }
+    } while (dataItemOrBreak !is DataItemOrBreak.Break)
+    return DataItem.TextString(value)
 }
 
 private fun BufferedSource.readTextString(byteCount: ULong): DataItem.TextString {
