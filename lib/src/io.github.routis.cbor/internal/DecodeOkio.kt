@@ -1,103 +1,192 @@
 package io.github.routis.cbor.internal
 
-import io.github.routis.cbor.*
+import io.github.routis.cbor.DataItem
+import io.github.routis.cbor.Key
 import okio.BufferedSource
 import kotlin.contracts.contract
 
 
-internal fun BufferedSource.readCbor(): DataItem {
+private sealed interface DataItemOrBreak {
 
-    val ubyte = readUByte()
-    val (majorType, additionalInfo) = majorTypeAndAdditionalInfo(ubyte)
-    fun readSizeAndIfDefinite(block: (ULong) -> DataItem): DataItem {
+    @JvmInline
+    value class Item(val item: DataItem) : DataItemOrBreak
+    data object Break : DataItemOrBreak
+
+    companion object {
+        private const val BRAKE_BYTE: UByte = 0b111_11111u
+        fun isBreak(uByte: UByte): Boolean = BRAKE_BYTE == uByte
+    }
+}
+
+private fun DataItem.orBreak() = DataItemOrBreak.Item(this)
+
+internal fun BufferedSource.readDataItem(): DataItem {
+    val dataItemOrBreak = readDataItemOrBreak()
+    check(dataItemOrBreak is DataItemOrBreak.Item) { "Unexpected break" }
+    return dataItemOrBreak.item
+}
+
+private fun BufferedSource.readDataItemOrBreak(): DataItemOrBreak {
+
+    val initialByte = readUByte()
+    val additionalInfo = AdditionalInfo(initialByte)
+
+    fun readSizeThen(ifIndefinite: () -> DataItem, ifDefinite: (ULong) -> DataItem): DataItem {
         return when (val byteCount = readSize(additionalInfo)) {
-            Size.Indefinite -> error("Streaming not supported")
-            is Size.Definite -> block(byteCount.size)
+            Size.Indefinite -> ifIndefinite()
+            is Size.Definite -> ifDefinite(byteCount.size)
         }
     }
-    return when (majorType) {
-        MajorType.Zero -> readCborPosInt(additionalInfo)
-        MajorType.One -> readCborNegInt(additionalInfo)
-        MajorType.Two -> readSizeAndIfDefinite { byteCount -> readCborBytes(byteCount) }
-        MajorType.Three -> readSizeAndIfDefinite { byteCount -> readCborText(byteCount) }
-        MajorType.Four -> readSizeAndIfDefinite { itemsNo -> readCborArray(itemsNo) }
-        MajorType.Five -> readSizeAndIfDefinite { entriesNo -> readCborMap(entriesNo) }
-        MajorType.Six -> readCborTag(additionalInfo)
+    return when (MajorType(initialByte)) {
+        MajorType.Zero -> readUnsigntInteger(additionalInfo).orBreak()
+        MajorType.One -> readNegativeInteger(additionalInfo).orBreak()
+        MajorType.Two -> readSizeThen(ifIndefinite = ::readBytesStringUntilBreak, ifDefinite = ::readByteString).orBreak()
+        MajorType.Three -> readSizeThen(ifIndefinite = ::readTextStringUntilBreak, ifDefinite = ::readTextString).orBreak()
+        MajorType.Four -> readSizeThen(ifIndefinite = ::readArrayUntilBreak, ifDefinite = ::readArray).orBreak()
+        MajorType.Five -> readSizeThen(ifIndefinite = ::readMapUntilBreak, ifDefinite = ::readMap).orBreak()
+        MajorType.Six -> readTagged(additionalInfo).orBreak()
         MajorType.Seven -> readMajorSeven(additionalInfo)
     }
 }
 
 
-private fun BufferedSource.readCborPosInt(additionalInfo: AdditionalInfo): DataItem.PositiveInteger {
+private fun BufferedSource.readUnsigntInteger(additionalInfo: AdditionalInfo): DataItem.UnsignedInteger {
     val value = readUnsignedInt(additionalInfo)
-    return DataItem.PositiveInteger(value)
+    return DataItem.UnsignedInteger(value)
 }
 
-private fun BufferedSource.readCborNegInt(additionalInfo: AdditionalInfo): DataItem.NegativeInteger {
+private fun BufferedSource.readNegativeInteger(additionalInfo: AdditionalInfo): DataItem.NegativeInteger {
     val value = readUnsignedInt(additionalInfo)
     return DataItem.NegativeInteger(-1 - value.toLong())
 }
-private fun BufferedSource.readCborBytes(byteCount: ULong): DataItem.Bytes {
+
+private fun BufferedSource.readBytesStringUntilBreak(): DataItem.ByteString {
+    val bytes = buildList {
+        do {
+            val byte = readUByte()
+            val isBreak = DataItemOrBreak.isBreak(byte)
+            if (!isBreak) add(byte)
+        } while (!isBreak)
+    }.toUByteArray()
+    return DataItem.ByteString(bytes)
+}
+
+private fun BufferedSource.readByteString(byteCount: ULong): DataItem.ByteString {
     val bytes = buildList {
         repeat(byteCount) { add(readUByte()) }
     }.toUByteArray()
-    return DataItem.Bytes(bytes)
+    return DataItem.ByteString(bytes)
 }
-private fun BufferedSource.readCborText(byteCount: ULong): DataItem.Text {
+
+private fun BufferedSource.readTextStringUntilBreak(): DataItem.TextString {
+
+    val bytes = buildList {
+        do {
+            val byte = readByte()
+            val isBreak = DataItemOrBreak.isBreak(byte.toUByte())
+            byte.takeUnless { isBreak }?.let(::add)
+        } while (!isBreak)
+    }.toByteArray()
+
+    return DataItem.TextString(String(bytes))
+}
+
+private fun BufferedSource.readTextString(byteCount: ULong): DataItem.TextString {
     require(byteCount <= Long.MAX_VALUE.toULong()) { "Too big" }
-    return DataItem.Text(readUtf8(byteCount.toLong()))
+    return DataItem.TextString(readUtf8(byteCount.toLong()))
 }
-private fun BufferedSource.readCborArray(itemsNo: ULong): DataItem.CborArray {
+
+
+private fun BufferedSource.readArrayUntilBreak(): DataItem.Array {
     val items = buildList {
-        repeat(itemsNo) { add(readCbor()) }
+        do {
+            val dataItemOrBreak = readDataItemOrBreak()
+            if (dataItemOrBreak is DataItemOrBreak.Item) {
+                add(dataItemOrBreak.item)
+            }
+        } while (dataItemOrBreak !is DataItemOrBreak.Break)
     }
-    return DataItem.CborArray(items)
+    return DataItem.Array(items)
 }
-private fun BufferedSource.readCborMap(itemsNo: ULong): DataItem.CborMap {
+
+private fun BufferedSource.readArray(itemsNo: ULong): DataItem.Array {
+    val items = buildList {
+        repeat(itemsNo) { add(readDataItem()) }
+    }
+    return DataItem.Array(items)
+}
+
+
+private fun BufferedSource.readMapUntilBreak(): DataItem.CborMap {
+    val items = buildMap {
+        do {
+            val keyOrBreak = readDataItemOrBreak()
+            if (keyOrBreak is DataItemOrBreak.Item) {
+                val key = Key(keyOrBreak.item).getOrThrow()
+                check(!contains(key)) { "Duplicate $key" }
+                val value = readDataItem()
+                put(key, value)
+            }
+        } while (keyOrBreak !is DataItemOrBreak.Break)
+    }
+    return DataItem.CborMap(items)
+}
+
+
+private fun BufferedSource.readMap(itemsNo: ULong): DataItem.CborMap {
     val items = buildMap {
         repeat(itemsNo) {
-            val k = Key(readCbor()).getOrThrow()
-            check(!contains(k)) { "Duplicate $k" }
-            val value = readCbor()
-            put(k, value)
+            val key = Key(readDataItem()).getOrThrow()
+            check(!contains(key)) { "Duplicate $key" }
+            val value = readDataItem()
+            put(key, value)
         }
     }
     return DataItem.CborMap(items)
 }
-private fun BufferedSource.readCborTag(additionalInfo: AdditionalInfo): DataItem.Tagged<*> {
-    val tag = readUnsignedInt(additionalInfo).let(Tag::of)
-    val value = readCbor()
-    return tag(tag, value)
-}
-private fun BufferedSource.readMajorSeven(additionalInfo: AdditionalInfo): DataItem = when (additionalInfo.value.toInt()) {
-    in 0..19 -> DataItem.SimpleType.Unassigned(additionalInfo.value)
-    20 -> DataItem.Bool(false)
-    21 -> DataItem.Bool(true)
-    22 -> DataItem.Null
-    23 -> DataItem.Undefined
-    24 -> when (val next = readUByte()) {
-        in 0.toUByte()..31.toUByte() -> DataItem.SimpleType.Reserved(next)
-        else -> DataItem.SimpleType.Unassigned(next)
+
+
+private fun BufferedSource.readTagged(additionalInfo: AdditionalInfo): DataItem.Tagged<*> {
+    val tag = readUnsignedInt(additionalInfo)
+    val dataItem = readDataItem()
+    return when (val supportedTag = Tag.of(tag)) {
+        null -> DataItem.Tagged.Unassigned(tag, dataItem)
+        else -> supportedTag.item(dataItem)
     }
 
-    25 -> TODO("F16???")
-    26 -> DataItem.Float32(TODO("F32???"))
-    27 -> DataItem.Float64(TODO("F64???"))
-    in 28..30 -> DataItem.SimpleType.Unassigned(additionalInfo.value)
-    31 -> DataItem.Break
-    else -> error("Not supported")
 }
+
+private fun BufferedSource.readMajorSeven(additionalInfo: AdditionalInfo): DataItemOrBreak =
+        when (additionalInfo.value.toInt()) {
+            in 0..19 -> DataItem.SimpleType.Unassigned(additionalInfo.value).orBreak()
+            20 -> DataItem.Bool(false).orBreak()
+            21 -> DataItem.Bool(true).orBreak()
+            22 -> DataItem.Null.orBreak()
+            23 -> DataItem.Undefined.orBreak()
+            24 -> when (val next = readUByte()) {
+                in 0.toUByte()..31.toUByte() -> DataItem.SimpleType.Reserved(next)
+                else -> DataItem.SimpleType.Unassigned(next)
+            }.orBreak()
+
+            25 -> DataItem.HalfPrecisionFloat(floatFromHalfBits(readShort())).orBreak()
+            26 -> DataItem.SinglePrecisionFloat(Float.fromBits(readInt())).orBreak()
+            27 -> DataItem.DoublePrecisionFloat(Double.fromBits(readLong())).orBreak()
+            in 28..30 -> DataItem.SimpleType.Unassigned(additionalInfo.value).orBreak()
+            31 -> DataItemOrBreak.Break
+            else -> error("Not supported")
+        }
+
 
 private sealed interface Size {
     data object Indefinite : Size
     data class Definite(val size: ULong) : Size
 }
 
-private const val IndefiniteLengthIndicator: UByte = 31u
+private const val indefiniteLengthIndicator: UByte = 31u
 
 private fun BufferedSource.readSize(additionalInfo: AdditionalInfo): Size =
-        (if (additionalInfo.value == IndefiniteLengthIndicator) Size.Indefinite
-        else Size.Definite(readUnsignedInt(additionalInfo)))
+        if (additionalInfo.value == indefiniteLengthIndicator) Size.Indefinite
+        else Size.Definite(readUnsignedInt(additionalInfo))
 
 
 /**
@@ -120,33 +209,6 @@ private fun BufferedSource.readUnsignedInt(additionalInfo: AdditionalInfo): ULon
         27 -> readULong()
         else -> error("Cannot use ${additionalInfo.value} for reading unsigned. Valid values are in 0..27 inclusive")
     }.toULong()
-}
-
-/**
- * Splits the [initialByte] into a  [MajorType] and  [AdditionalInfo]
- *
- * @param initialByte The initial byte of each encoded data item contains
- * both information about the major type (the high-order 3 bits) and
- * additional information (the low-order 5 bits)
- * @return the [MajorType] and the [AdditionalInfo]
- */
-private fun majorTypeAndAdditionalInfo(initialByte: UByte): Pair<MajorType, AdditionalInfo> {
-
-    val highOrder3Bits = (initialByte.toInt() and 0b11100000) shr 5
-    val lowOrder5Bits = initialByte and 0b00011111.toUByte()
-    val majorType = when (highOrder3Bits) {
-        0 -> MajorType.Zero
-        1 -> MajorType.One
-        2 -> MajorType.Two
-        3 -> MajorType.Three
-        4 -> MajorType.Four
-        5 -> MajorType.Five
-        6 -> MajorType.Six
-        7 -> MajorType.Seven
-        else -> error("Cannot happen, since we use only 3bits")
-    }
-    val additionalInfo = AdditionalInfo(lowOrder5Bits)
-    return majorType to additionalInfo
 }
 
 private fun BufferedSource.readUByte(): UByte = readByte().toUByte()

@@ -1,7 +1,11 @@
 package io.github.routis.cbor
 
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.*
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.DynamicTest.dynamicTest
+import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.assertDoesNotThrow
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -12,7 +16,7 @@ class DecodeTests {
     @Test
     fun `Major 0 single byte`() {
         for (i in 0..23) {
-            val expected = DataItem.PositiveInteger(i.toULong())
+            val expected = DataItem.UnsignedInteger(i.toULong())
             val decoded = decode(byteArrayOf(i.toByte()))
             assertEquals(expected, decoded)
         }
@@ -22,7 +26,7 @@ class DecodeTests {
     fun `Major 0 0b000_01010 is uint 10`() {
         val bytes = byteArrayOf(0b000_01010.toByte())
         val decoded = decode(bytes)
-        assertEquals(DataItem.PositiveInteger(10uL), decoded)
+        assertEquals(DataItem.UnsignedInteger(10uL), decoded)
     }
 
     @Test
@@ -33,7 +37,7 @@ class DecodeTests {
                 0xF4.toByte(),
         )
         val decoded = decode(bytes)
-        assertEquals(DataItem.PositiveInteger(500uL), decoded)
+        assertEquals(DataItem.UnsignedInteger(500uL), decoded)
     }
 
     @Test
@@ -60,6 +64,36 @@ class DecodeTests {
             toJson(cbor)!!.also { println(jsonSupport.encodeToString(it)) }
         }
     }
+
+
+    @TestFactory
+    fun appendixATests() = readTestVectors().map { createTestFor(it) }
+
+
+    private fun createTestFor(tv: TestVector): DynamicTest {
+
+        fun DataItem.assertJsonIs(expected: JsonElement, dataItemJson: JsonElement?) {
+
+            when (this) {
+                is DataItem.SinglePrecisionFloat -> assertEquals(expected.jsonPrimitive.floatOrNull, dataItemJson?.jsonPrimitive?.floatOrNull)
+                is DataItem.DoublePrecisionFloat -> assertEquals(expected.jsonPrimitive.doubleOrNull, dataItemJson?.jsonPrimitive?.doubleOrNull)
+                is DataItem.HalfPrecisionFloat -> assertEquals(expected.jsonPrimitive.floatOrNull, dataItemJson?.jsonPrimitive?.floatOrNull)
+                else -> assertEquals(expected, dataItemJson)
+            }
+
+        }
+
+        return dynamicTest("given a cbor \"${tv.hex}\", when decoding, then it should produce a dataitem  ${tv.decoded ?: tv.diagnostic}}") {
+            val dataItem = assertDoesNotThrow("Failed decode") {
+                decode(tv.bytes)
+            }.also { println(it) }
+
+            val dataItemJson = assertDoesNotThrow("Failed toJson for ${dataItem.javaClass}") { toJson(dataItem) }
+            tv.decoded?.let { elem -> dataItem.assertJsonIs(elem, dataItemJson) }
+
+        }
+    }
+
 
     private val jsonSupport = Json { prettyPrint = true }
     private val vpToken = """

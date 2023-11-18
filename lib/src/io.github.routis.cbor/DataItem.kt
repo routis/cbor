@@ -2,26 +2,104 @@ package io.github.routis.cbor
 
 sealed interface DataItem {
 
-    @JvmInline
-    value class PositiveInteger(val value: ULong) : DataItem
+    sealed interface Integer : DataItem
 
+    /**
+     * Major 0
+     */
     @JvmInline
-    value class NegativeInteger(val value: Long): DataItem{
+    value class UnsignedInteger(val value: ULong) : Integer
+
+    /**
+     * Major 1
+     */
+    @JvmInline
+    value class NegativeInteger(val value: Long) : Integer {
         init {
-            require(value <= -1) {"Should -1 or lower. Was $value"}
+            require(value <= -1) { "Should -1 or lower but was $value" }
         }
     }
 
+    /**
+     * Major 2
+     */
     @JvmInline
-    value class Float32(val value: Float) : DataItem
+    value class ByteString(val value: UByteArray) : DataItem
+
+    /**
+     * Major 3
+     */
+    
+    @JvmInline
+    value class TextString(val value: String) : DataItem
+
+    /**
+     * Major 4
+     */
+    @JvmInline
+    value class Array(private val items: List<DataItem>) : DataItem, List<DataItem> by items
+
+    /**
+     * Major 5
+     */
+    @JvmInline
+    value class CborMap(private val items: Map<Key<*>, DataItem>) : DataItem, Map<Key<*>, DataItem> by items
+
+    /**
+     * Major 6
+     */
+    sealed interface Tagged<out DI : DataItem> : DataItem {
+        val item: DI
+
+        /**
+         * Tag number 0 contains a text string in the standard format described by the
+         * date-time production in RFC3339, as refined by Section 3.3 of RFC4287,
+         * representing the point in time described there.
+         */
+        data class StandardDateTimeString(override val item: TextString) : Tagged<TextString>
+        sealed interface EpochBasedDateTime<DI : DataItem> : Tagged<DI> {
+            data class Unsigned(override val item: UnsignedInteger) : EpochBasedDateTime<UnsignedInteger>
+            data class Negative(override val item: NegativeInteger) : EpochBasedDateTime<NegativeInteger>
+            data class HalfFloat(override val item: HalfPrecisionFloat) : EpochBasedDateTime<HalfPrecisionFloat>
+            data class SingleFloat(override val item: SinglePrecisionFloat) : EpochBasedDateTime<SinglePrecisionFloat>
+            data class DoubleFloat(override val item: DoublePrecisionFloat) : EpochBasedDateTime<DoublePrecisionFloat>
+        }
+
+        data class BigNumUnsigned(override val item: ByteString) : Tagged<ByteString>
+        data class BigNumNegative(override val item: ByteString) : Tagged<ByteString>
+        data class DecimalFraction(val exponent: Integer, val mantissa: Integer) : Tagged<Array> {
+            override val item: Array
+                get() = Array(listOf(exponent, mantissa))
+        }
+        data class BigFloat(val exponent: Integer, val mantissa: Integer) : Tagged<Array> {
+            override val item: Array
+                get() = Array(listOf(exponent, mantissa))
+        }
+        data class DborDataItem(override val item: ByteString) : Tagged<ByteString>
+
+        data class SelfDescribedCbor(override val item: DataItem): Tagged<DataItem>
+
+        sealed interface EncodedText : Tagged<TextString> {
+            data class Base64(override val item: TextString) : EncodedText
+            data class Base64Url(override val item: TextString) : EncodedText
+            data class Regex(override val item: TextString) : EncodedText
+            data class Mime(override val item: TextString) : EncodedText
+            data class Uri(override val item: TextString) : EncodedText
+        }
+        data class FullDateTime(override val item: TextString) : Tagged<TextString>
+        data class Unassigned(val tag: ULong, override val item: DataItem) : Tagged<DataItem>
+
+    }
 
     @JvmInline
-    value class Float64(val value: Double) : DataItem
+    value class HalfPrecisionFloat(val value: Float) : DataItem
 
     @JvmInline
-    value class Text(val value: String) : DataItem
+    value class SinglePrecisionFloat(val value: Float) : DataItem
 
-    data object Break : DataItem
+    @JvmInline
+    value class DoublePrecisionFloat(val value: Double) : DataItem
+
     data object Null : DataItem
     data object Undefined : DataItem
 
@@ -36,47 +114,8 @@ sealed interface DataItem {
         value class Reserved(val value: UByte) : SimpleType
     }
 
-    @JvmInline
-    value class Bytes(val value: UByteArray) : DataItem
-
-    sealed interface Tagged<out DI: DataItem> : DataItem{
-
-        val value: DI
-        data class Cbor(override val value: Bytes): Tagged<Bytes>
-        data class DateTime(override val value: Text): Tagged<Text>
-        data class FullDateTime(override val value: Text): Tagged<Text>
-        data class Base64(override val value: Text): Tagged<Text>
-        data class Base64Url(override val value: Text): Tagged<Text>
-        data class Regex(override val value: Text): Tagged<Text>
-        data class Mime(override val value: Text): Tagged<Text>
-        data class Uri(override val value: Text): Tagged<Text>
-        data class Unassigned(val tag: Tag, override val value: DataItem): Tagged<DataItem>
-    }
-
-    @JvmInline
-    value class CborArray(private val items: List<DataItem>) : DataItem, List<DataItem> by items
-
-    @JvmInline
-    value class CborMap(private val items: Map<Key<*>, DataItem>) : DataItem, Map<Key<*>, DataItem> by items
 }
 
-fun <C: DataItem> tag(tag: Tag, value: C): DataItem.Tagged<DataItem> = when(tag){
-    Tag.Base64 -> DataItem.Tagged.Base64(value as DataItem.Text)
-    Tag.Base64Url -> DataItem.Tagged.Base64Url(value as DataItem.Text)
-    Tag.BigFloat -> DataItem.Tagged.Unassigned(tag, value)
-    Tag.BigNum -> DataItem.Tagged.Unassigned(tag, value)
-    Tag.Cbor -> DataItem.Tagged.Cbor(value as DataItem.Bytes)
-    Tag.CborSelf -> DataItem.Tagged.Unassigned(tag, value)
-    Tag.DateTime -> DataItem.Tagged.DateTime(value as DataItem.Text)
-    Tag.Decimal -> DataItem.Tagged.Unassigned(tag, value)
-    Tag.Mime -> DataItem.Tagged.DateTime(value as DataItem.Text)
-    Tag.NegativeBigNum -> TODO("NegativeBigNu,")
-    Tag.Regex -> DataItem.Tagged.Regex(value as DataItem.Text)
-    Tag.Timestamp -> DataItem.Tagged.Unassigned(tag, value)
-    Tag.ToBase16 -> DataItem.Tagged.Unassigned(tag, value)
-    Tag.ToBase64 -> DataItem.Tagged.Unassigned(tag, value)
-    Tag.ToBase64Url -> DataItem.Tagged.Unassigned(tag, value)
-    is Tag.Unassigned -> DataItem.Tagged.Unassigned(tag, value)
-    Tag.Uri -> DataItem.Tagged.Uri(value as DataItem.Text)
-    Tag.FullDate -> DataItem.Tagged.FullDateTime(value as DataItem.Text)
-}
+
+
+

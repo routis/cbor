@@ -16,10 +16,12 @@ settings:
     languageVersion: 1.9
     optIns:
       - kotlin.io.encoding.ExperimentalEncodingApi
+      - kotlin.ExperimentalStdlibApi
       - kotlin.ExperimentalUnsignedTypes
       - kotlinx.serialization.ExperimentalSerializationApi
       - kotlin.contracts.ExperimentalContracts
     progressiveMode: true
+    serialization: json
   java:
     source: 17
   jvm:
