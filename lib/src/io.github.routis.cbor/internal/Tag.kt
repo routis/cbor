@@ -68,7 +68,7 @@ internal fun Tag.value(): ULong = when (this) {
 }
 
 
-internal fun Tag.item(dataItem: DataItem): DataItem.Tagged<DataItem> = when (this) {
+internal fun Tag.withItem(dataItem: DataItem): DataItem.Tagged<DataItem> = when (this) {
     Tag.StandardDateTimeString -> DataItem.Tagged.StandardDateTimeString(expected(dataItem))
     Tag.EpochBasedDateTime -> when (dataItem) {
         is DataItem.UnsignedInteger -> DataItem.Tagged.EpochBasedDateTime.Unsigned(dataItem)
