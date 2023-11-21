@@ -1,22 +1,22 @@
 package io.github.routis.cbor
 
 sealed interface Key<out DI : DataItem> {
-    val value: DI
+    val item: DI
 
     @JvmInline
-    value class BoolKey(override val value: DataItem.Bool) : Key<DataItem.Bool>
+    value class BoolKey(override val item: DataItem.Bool) : Key<DataItem.Bool>
 
     @JvmInline
-    value class ByteStringKey(override val value: DataItem.ByteString) : Key<DataItem.ByteString>
+    value class ByteStringKey(override val item: DataItem.ByteString) : Key<DataItem.ByteString>
 
     @JvmInline
-    value class UnsignedIntegerKey(override val value: DataItem.UnsignedInteger) : Key<DataItem.UnsignedInteger>
+    value class UnsignedIntegerKey(override val item: DataItem.UnsignedInteger) : Key<DataItem.UnsignedInteger>
 
     @JvmInline
-    value class NegativeIntegerKey(override val value: DataItem.NegativeInteger) : Key<DataItem.NegativeInteger>
+    value class NegativeIntegerKey(override val item: DataItem.NegativeInteger) : Key<DataItem.NegativeInteger>
 
     @JvmInline
-    value class TextStringKey(override val value: DataItem.TextString) : Key<DataItem.TextString>
+    value class TextStringKey(override val item: DataItem.TextString) : Key<DataItem.TextString>
 
     companion object {
         operator fun invoke(di: DataItem): Result<Key<DataItem>> = runCatching {

@@ -4,6 +4,7 @@ import io.github.routis.cbor.DataItem
 import io.github.routis.cbor.Key
 import okio.BufferedSource
 import okio.IOException
+import java.math.BigInteger
 import kotlin.contracts.contract
 
 /**
@@ -67,7 +68,8 @@ private fun BufferedSource.readUnsigntInteger(additionalInfo: AdditionalInfo): D
 @Throws(IOException::class)
 private fun BufferedSource.readNegativeInteger(additionalInfo: AdditionalInfo): DataItem.NegativeInteger {
     val value = readUnsignedInt(additionalInfo)
-    return DataItem.NegativeInteger(-1 - value.toLong())
+    val bigValue = - BigInteger.ONE - BigInteger(value.toString())
+    return DataItem.NegativeInteger(bigValue)
 }
 
 private const val BRAKE_BYTE: UByte = 0b111_11111u
@@ -78,7 +80,7 @@ private fun BufferedSource.readByteString(size: Size): DataItem.ByteString {
         Size.Indefinite -> indexOf(BRAKE_BYTE.toByte())
         is Size.Definite -> size.value.toLong()
     }
-    val bytes = readByteArray(byteCount).toUByteArray()
+    val bytes = readByteArray(byteCount)
     return DataItem.ByteString(bytes)
 }
 
@@ -90,7 +92,7 @@ private fun BufferedSource.readTextString(size: Size): DataItem.TextString {
             var buffer = ""
             untilBreak { item ->
                 require(item is DataItem.TextString)
-                buffer += item.value
+                buffer += item.text
             }
             buffer
         }

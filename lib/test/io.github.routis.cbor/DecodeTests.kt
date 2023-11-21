@@ -48,20 +48,20 @@ class DecodeTests {
                 0xF3.toByte(),
         )
         val decoded = decode(bytes)
-        assertEquals(DataItem.NegativeInteger(-500L), decoded)
+        assertEquals(DataItem.NegativeInteger((-500L).toBigInteger()), decoded)
     }
 
     @Test
     fun `vp_token should be decoded`() {
         decodeBase64UrlSafe(vpToken).also { cbor ->
-            toJson(cbor)!!.also { println(jsonSupport.encodeToString(it)) }
+            toJson(cbor).also { println(jsonSupport.encodeToString(it)) }
         }
     }
 
     @Test
     fun `babis should be decoded`() {
         decodeBase64UrlSafe(babis).also { cbor ->
-            toJson(cbor)!!.also { println(jsonSupport.encodeToString(it)) }
+            toJson(cbor).also { println(jsonSupport.encodeToString(it)) }
         }
     }
 
