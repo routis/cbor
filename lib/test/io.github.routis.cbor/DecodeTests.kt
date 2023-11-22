@@ -64,6 +64,13 @@ class DecodeTests {
             toJson(cbor).also { println(jsonSupport.encodeToString(it)) }
         }
     }
+    @Test
+    fun `other should be decoded`() {
+        decode(otherHex.hexToByteArray(format = HexFormat { upperCase=true })).also { cbor ->
+            toJson(cbor).also { println(jsonSupport.encodeToString(it)) }
+        }
+    }
+
 
 
     @TestFactory
@@ -148,5 +155,16 @@ class DecodeTests {
     N1aW5nX2NvdW50cnnYGFhvpGZyYW5kb21YIEp-BnPVwHaFuxEwOOvm5rWfgj1RZRi1yPr86MxX
     to20aGRpZ2VzdElECGxlbGVtZW50VmFsdWXZA-xqMjAyMy0xMS0wOXFlbGVtZW50SWRlbnRpZm
     llcm1pc3N1YW5jZV9kYXRl
+    """.trimIndent().replace("\n", "")
+
+    private val otherHex = """
+    A2626964781E6469643A6578616D706C653A313233343536373839616263
+    6465666768696E61757468656E7469636174696F6E81A462696478256469
+    643A6578616D706C653A313233343536373839616263646566676869236B
+    6579732D316474797065781A45643235353139566572696669636174696F
+    6E4B6579323031386A636F6E74726F6C6C6572781E6469643A6578616D70
+    6C653A3132333435363738396162636465666768696F7075626C69634B65
+    79426173653538782C483343324156764C4D7636676D4D4E616D33755641
+    6A5A70666B634A437744776E5A6E367A3377586D715056
     """.trimIndent().replace("\n", "")
 }

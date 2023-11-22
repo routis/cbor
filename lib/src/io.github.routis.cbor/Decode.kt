@@ -1,7 +1,7 @@
 package io.github.routis.cbor
 
 import io.github.routis.cbor.internal.readDataItem
-import okio.Buffer
+import kotlinx.io.Buffer
 import kotlin.io.encoding.Base64
 
 

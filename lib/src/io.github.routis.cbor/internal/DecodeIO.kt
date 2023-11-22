@@ -2,8 +2,7 @@ package io.github.routis.cbor.internal
 
 import io.github.routis.cbor.DataItem
 import io.github.routis.cbor.Key
-import okio.BufferedSource
-import okio.IOException
+import kotlinx.io.*
 import java.math.BigInteger
 import kotlin.contracts.contract
 
@@ -28,7 +27,7 @@ private fun DataItem.orBreak() = DataItemOrBreak.Item(this)
  * @throws IllegalStateException when instead of a [DataItem] we get break
  */
 @Throws(IllegalStateException::class, IOException::class)
-internal fun BufferedSource.readDataItem(): DataItem {
+internal fun Source.readDataItem(): DataItem {
     val dataItemOrBreak = readDataItemOrBreak()
     check(dataItemOrBreak is DataItemOrBreak.Item) { "Unexpected break" }
     return dataItemOrBreak.item
@@ -38,7 +37,7 @@ internal fun BufferedSource.readDataItem(): DataItem {
  * Reads the next [DataItem] or break from the source.
  */
 @Throws(IOException::class)
-private fun BufferedSource.readDataItemOrBreak(): DataItemOrBreak {
+private fun Source.readDataItemOrBreak(): DataItemOrBreak {
 
     val initialByte = readUByte()
     val majorType = MajorType(initialByte)
@@ -60,32 +59,32 @@ private fun BufferedSource.readDataItemOrBreak(): DataItemOrBreak {
 }
 
 @Throws(IOException::class)
-private fun BufferedSource.readUnsigntInteger(additionalInfo: AdditionalInfo): DataItem.UnsignedInteger {
+private fun Source.readUnsigntInteger(additionalInfo: AdditionalInfo): DataItem.UnsignedInteger {
     val value = readUnsignedInt(additionalInfo)
     return DataItem.UnsignedInteger(value)
 }
 
 @Throws(IOException::class)
-private fun BufferedSource.readNegativeInteger(additionalInfo: AdditionalInfo): DataItem.NegativeInteger {
+private fun Source.readNegativeInteger(additionalInfo: AdditionalInfo): DataItem.NegativeInteger {
     val value = readUnsignedInt(additionalInfo)
-    val bigValue = - BigInteger.ONE - BigInteger(value.toString())
+    val bigValue = -BigInteger.ONE - BigInteger(value.toString())
     return DataItem.NegativeInteger(bigValue)
 }
 
 private const val BRAKE_BYTE: UByte = 0b111_11111u
 
 @Throws(IOException::class)
-private fun BufferedSource.readByteString(size: Size): DataItem.ByteString {
+private fun Source.readByteString(size: Size): DataItem.ByteString {
     val byteCount = when (size) {
         Size.Indefinite -> indexOf(BRAKE_BYTE.toByte())
         is Size.Definite -> size.value.toLong()
     }
-    val bytes = readByteArray(byteCount)
+    val bytes = readByteArray(byteCount.toInt())
     return DataItem.ByteString(bytes)
 }
 
 @Throws(IOException::class)
-private fun BufferedSource.readTextString(size: Size): DataItem.TextString {
+private fun Source.readTextString(size: Size): DataItem.TextString {
     val text = when (size) {
 
         Size.Indefinite -> {
@@ -100,7 +99,7 @@ private fun BufferedSource.readTextString(size: Size): DataItem.TextString {
         is Size.Definite -> {
             require(size.value <= Long.MAX_VALUE.toULong()) { "Too big byteCount to handle" }
             val byteCount = size.value.toLong()
-            readUtf8(byteCount)
+            readString(byteCount)
         }
     }
 
@@ -108,7 +107,7 @@ private fun BufferedSource.readTextString(size: Size): DataItem.TextString {
 }
 
 @Throws(IOException::class)
-private fun BufferedSource.readArray(size: Size): DataItem.Array {
+private fun Source.readArray(size: Size): DataItem.Array {
     val items = buildList {
         when (size) {
             Size.Indefinite -> untilBreak(::add)
@@ -119,7 +118,7 @@ private fun BufferedSource.readArray(size: Size): DataItem.Array {
 }
 
 @Throws(IOException::class)
-private fun BufferedSource.readMap(size: Size): DataItem.CborMap {
+private fun Source.readMap(size: Size): DataItem.CborMap {
 
     val items = buildMap {
 
@@ -140,7 +139,7 @@ private fun BufferedSource.readMap(size: Size): DataItem.CborMap {
 }
 
 @Throws(IOException::class)
-private fun BufferedSource.readTagged(additionalInfo: AdditionalInfo): DataItem.Tagged<*> {
+private fun Source.readTagged(additionalInfo: AdditionalInfo): DataItem.Tagged<*> {
     val tag = readUnsignedInt(additionalInfo)
     val dataItem = readDataItem()
     return when (val supportedTag = Tag.of(tag)) {
@@ -150,7 +149,7 @@ private fun BufferedSource.readTagged(additionalInfo: AdditionalInfo): DataItem.
 }
 
 @Throws(IOException::class)
-private fun BufferedSource.readMajorSeven(additionalInfo: AdditionalInfo): DataItemOrBreak =
+private fun Source.readMajorSeven(additionalInfo: AdditionalInfo): DataItemOrBreak =
         when (additionalInfo.value.toInt()) {
             in 0..19 -> DataItem.SimpleType.Unassigned(additionalInfo.value).orBreak()
             20 -> DataItem.Bool(false).orBreak()
@@ -175,7 +174,7 @@ private fun BufferedSource.readMajorSeven(additionalInfo: AdditionalInfo): DataI
  * For each [DataItem] the callback [useDataItem] is being invoked
  */
 @Throws(IOException::class)
-private fun BufferedSource.untilBreak(useDataItem: (DataItem) -> Unit) {
+private fun Source.untilBreak(useDataItem: (DataItem) -> Unit) {
     do {
         val dataItemOrBreak = readDataItemOrBreak()
         if (dataItemOrBreak is DataItemOrBreak.Item) {
@@ -202,23 +201,23 @@ private sealed interface Size {
 private const val indefiniteLengthIndicator: UByte = 31u
 
 @Throws(IOException::class)
-private fun BufferedSource.readSize(additionalInfo: AdditionalInfo): Size =
+private fun Source.readSize(additionalInfo: AdditionalInfo): Size =
         if (additionalInfo.value == indefiniteLengthIndicator) Size.Indefinite
         else Size.Definite(readUnsignedInt(additionalInfo))
 
 
 /**
- * Reads from the [BufferedSource] an unsinged integer, using the [additionalInfo] as follows:
+ * Reads from the [Source] an unsinged integer, using the [additionalInfo] as follows:
  * - if [additionalInfo] is less than 24, the result is the additional info itself
  * - if [additionalInfo] is 24, 25, 26 or 27 The argument's value is held in the following 1, 2, 4, or 8 bytes,
  *   respectively, in network byte order
  *
  * @param additionalInfo the instuction on how to read the unsigned integer
- * @receiver The [BufferedSource] to read from
+ * @receiver The [Source] to read from
  * @return the unsigned intger. Regardless of the case this always a [ULong]
  */
 @Throws(IOException::class)
-private fun BufferedSource.readUnsignedInt(additionalInfo: AdditionalInfo): ULong {
+private fun Source.readUnsignedInt(additionalInfo: AdditionalInfo): ULong {
 
     return when (additionalInfo.value.toInt()) {
         in 0..<24 -> additionalInfo.value.toULong()
@@ -231,13 +230,13 @@ private fun BufferedSource.readUnsignedInt(additionalInfo: AdditionalInfo): ULon
 }
 
 @Throws(IOException::class)
-private fun BufferedSource.readUByte(): UByte = readByte().toUByte()
+private fun Source.readUByte(): UByte = readByte().toUByte()
 
 @Throws(IOException::class)
-private fun BufferedSource.readUShort(): UShort = readShort().toUShort()
+private fun Source.readUShort(): UShort = readShort().toUShort()
 
 @Throws(IOException::class)
-private fun BufferedSource.readUInt(): UInt = readInt().toUInt()
+private fun Source.readUInt(): UInt = readInt().toUInt()
 
 @Throws(IOException::class)
-private fun BufferedSource.readULong(): ULong = readLong().toULong()
+private fun Source.readULong(): ULong = readLong().toULong()
