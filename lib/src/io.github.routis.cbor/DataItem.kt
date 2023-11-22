@@ -4,26 +4,29 @@ import java.math.BigInteger
 
 sealed interface DataItem {
 
-    sealed interface Integer : DataItem
-
     /**
-     * An unsigned integer in the range 0..2^64-1 inclusive
+     * Integer numbers in the range -2^64..2^64-1 inclusive
      */
-    @JvmInline
-    value class UnsignedInteger(val value: ULong) : Integer{
-        init {
-            require(value>=0uL){"Value should be in range 0..2^64-1"}
+    sealed interface Integer : DataItem {
+
+        /**
+         * Unsigned integer in the range 0..2^64-1 inclusive
+         */
+        @JvmInline
+        value class Unsigned(val value: ULong) : Integer {
+            init {
+                require(value >= 0uL) { "Value should be in range 0..2^64-1" }
+            }
         }
-    }
 
-    /**
-     * Major 1
-     * A negative integer in the range -2^64..-1 inclusive
-     */
-    @JvmInline
-    value class NegativeInteger(val value: BigInteger) : Integer {
-        init {
-            require(value <= - BigInteger.ONE){"Value should be in range -2^64..-1 inclusive"}
+        /**
+         * Negative integer in the range -2^64..-1 inclusive
+         */
+        @JvmInline
+        value class Negative(val value: BigInteger) : Integer {
+            init {
+                require(value <= -BigInteger.ONE) { "Value should be in range -2^64..-1 inclusive" }
+            }
         }
     }
 
@@ -66,8 +69,8 @@ sealed interface DataItem {
          */
         data class StandardDateTimeString(override val content: TextString) : Tagged<TextString>
         sealed interface EpochBasedDateTime<DI : DataItem> : Tagged<DI> {
-            data class Unsigned(override val content: UnsignedInteger) : EpochBasedDateTime<UnsignedInteger>
-            data class Negative(override val content: NegativeInteger) : EpochBasedDateTime<NegativeInteger>
+            data class Unsigned(override val content: Integer.Unsigned) : EpochBasedDateTime<Integer.Unsigned>
+            data class Negative(override val content: Integer.Negative) : EpochBasedDateTime<Integer.Negative>
             data class HalfFloat(override val content: HalfPrecisionFloat) : EpochBasedDateTime<HalfPrecisionFloat>
             data class SingleFloat(override val content: SinglePrecisionFloat) : EpochBasedDateTime<SinglePrecisionFloat>
             data class DoubleFloat(override val content: DoublePrecisionFloat) : EpochBasedDateTime<DoublePrecisionFloat>
@@ -79,13 +82,15 @@ sealed interface DataItem {
             override val content: Array
                 get() = Array(listOf(exponent, mantissa))
         }
+
         data class BigFloat(val exponent: Integer, val mantissa: Integer) : Tagged<Array> {
             override val content: Array
                 get() = Array(listOf(exponent, mantissa))
         }
+
         data class DborDataItem(override val content: ByteString) : Tagged<ByteString>
 
-        data class SelfDescribedCbor(override val content: DataItem): Tagged<DataItem>
+        data class SelfDescribedCbor(override val content: DataItem) : Tagged<DataItem>
 
         sealed interface EncodedText : Tagged<TextString> {
             data class Base64(override val content: TextString) : EncodedText
@@ -94,10 +99,14 @@ sealed interface DataItem {
             data class Mime(override val content: TextString) : EncodedText
             data class Uri(override val content: TextString) : EncodedText
         }
+
         data class FullDateTime(override val content: TextString) : Tagged<TextString>
-        data class Unassigned(val tag: ULong, override val content: DataItem) : Tagged<DataItem>
+        data class Unsupported(val tag: ULong, override val content: DataItem) : Tagged<DataItem>
 
     }
+
+    @JvmInline
+    value class Bool(val value: Boolean) : DataItem
 
     @JvmInline
     value class HalfPrecisionFloat(val value: Float) : DataItem
@@ -112,18 +121,9 @@ sealed interface DataItem {
     data object Undefined : DataItem
 
     @JvmInline
-    value class Bool(val value: Boolean) : DataItem
+    value class Unassigned(val value: UByte) : DataItem
 
-    sealed interface SimpleType : DataItem {
-        @JvmInline
-        value class Unassigned(val value: UByte) : SimpleType
-
-        @JvmInline
-        value class Reserved(val value: UByte) : SimpleType
-    }
+    @JvmInline
+    value class Reserved(val value: UByte) : DataItem
 
 }
-
-
-
-

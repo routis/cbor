@@ -16,7 +16,7 @@ class DecodeTests {
     @Test
     fun `Major 0 single byte`() {
         for (i in 0..23) {
-            val expected = DataItem.UnsignedInteger(i.toULong())
+            val expected = DataItem.Integer.Unsigned(i.toULong())
             val decoded = decode(byteArrayOf(i.toByte()))
             assertEquals(expected, decoded)
         }
@@ -26,7 +26,7 @@ class DecodeTests {
     fun `Major 0 0b000_01010 is uint 10`() {
         val bytes = byteArrayOf(0b000_01010.toByte())
         val decoded = decode(bytes)
-        assertEquals(DataItem.UnsignedInteger(10uL), decoded)
+        assertEquals(DataItem.Integer.Unsigned(10uL), decoded)
     }
 
     @Test
@@ -37,7 +37,7 @@ class DecodeTests {
                 0xF4.toByte(),
         )
         val decoded = decode(bytes)
-        assertEquals(DataItem.UnsignedInteger(500uL), decoded)
+        assertEquals(DataItem.Integer.Unsigned(500uL), decoded)
     }
 
     @Test
@@ -48,7 +48,7 @@ class DecodeTests {
                 0xF3.toByte(),
         )
         val decoded = decode(bytes)
-        assertEquals(DataItem.NegativeInteger((-500L).toBigInteger()), decoded)
+        assertEquals(DataItem.Integer.Negative((-500L).toBigInteger()), decoded)
     }
 
     @Test

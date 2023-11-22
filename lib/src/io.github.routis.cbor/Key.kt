@@ -10,10 +10,8 @@ sealed interface Key<out DI : DataItem> {
     value class ByteStringKey(override val item: DataItem.ByteString) : Key<DataItem.ByteString>
 
     @JvmInline
-    value class UnsignedIntegerKey(override val item: DataItem.UnsignedInteger) : Key<DataItem.UnsignedInteger>
+    value class IntegerKey(override val item: DataItem.Integer) : Key<DataItem.Integer>
 
-    @JvmInline
-    value class NegativeIntegerKey(override val item: DataItem.NegativeInteger) : Key<DataItem.NegativeInteger>
 
     @JvmInline
     value class TextStringKey(override val item: DataItem.TextString) : Key<DataItem.TextString>
@@ -23,8 +21,8 @@ sealed interface Key<out DI : DataItem> {
             when (di) {
                 is DataItem.Bool -> BoolKey(di)
                 is DataItem.ByteString -> ByteStringKey(di)
-                is DataItem.UnsignedInteger -> UnsignedIntegerKey(di)
-                is DataItem.NegativeInteger -> NegativeIntegerKey(di)
+                is DataItem.Integer.Unsigned -> IntegerKey(di)
+                is DataItem.Integer.Negative -> IntegerKey(di)
                 is DataItem.TextString -> TextStringKey(di)
                 else -> error("$di cannot be used as key")
             }

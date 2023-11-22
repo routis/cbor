@@ -2,8 +2,7 @@ package io.github.routis.cbor.internal
 
 import io.github.routis.cbor.DataItem
 
-sealed interface Tag {
-
+internal sealed interface Tag {
 
     data object StandardDateTimeString : Tag
     data object EpochBasedDateTime : Tag
@@ -68,32 +67,37 @@ internal fun Tag.value(): ULong = when (this) {
 }
 
 
-internal fun Tag.withItem(dataItem: DataItem): DataItem.Tagged<DataItem> = when (this) {
-    Tag.StandardDateTimeString -> DataItem.Tagged.StandardDateTimeString(expected(dataItem))
-    Tag.EpochBasedDateTime -> when (dataItem) {
-        is DataItem.UnsignedInteger -> DataItem.Tagged.EpochBasedDateTime.Unsigned(dataItem)
-        is DataItem.NegativeInteger -> DataItem.Tagged.EpochBasedDateTime.Negative(dataItem)
-        is DataItem.HalfPrecisionFloat -> DataItem.Tagged.EpochBasedDateTime.HalfFloat(dataItem)
-        is DataItem.SinglePrecisionFloat -> DataItem.Tagged.EpochBasedDateTime.SingleFloat(dataItem)
-        is DataItem.DoublePrecisionFloat -> DataItem.Tagged.EpochBasedDateTime.DoubleFloat(dataItem)
-        else -> error("$dataItem is not valid for ${this}. Expecting integer or float")
-    }
+internal fun DataItem.tagged(tag: Tag): DataItem.Tagged<DataItem> {
+    val dataItem = this
+    return with(tag) {
+        when (this) {
+            Tag.StandardDateTimeString -> DataItem.Tagged.StandardDateTimeString(expected(dataItem))
+            Tag.EpochBasedDateTime -> when (dataItem) {
+                is DataItem.Integer.Unsigned -> DataItem.Tagged.EpochBasedDateTime.Unsigned(dataItem)
+                is DataItem.Integer.Negative -> DataItem.Tagged.EpochBasedDateTime.Negative(dataItem)
+                is DataItem.HalfPrecisionFloat -> DataItem.Tagged.EpochBasedDateTime.HalfFloat(dataItem)
+                is DataItem.SinglePrecisionFloat -> DataItem.Tagged.EpochBasedDateTime.SingleFloat(dataItem)
+                is DataItem.DoublePrecisionFloat -> DataItem.Tagged.EpochBasedDateTime.DoubleFloat(dataItem)
+                else -> error("$dataItem is not valid for ${this}. Expecting integer or float")
+            }
 
-    Tag.BigNumUnsigned -> DataItem.Tagged.BigNumUnsigned(expected(dataItem))
-    Tag.BigNumNegative -> DataItem.Tagged.BigNumNegative(expected(dataItem))
-    Tag.DecimalFraction -> exponentAndMantissa(dataItem) { e, m -> DataItem.Tagged.DecimalFraction(e, m) }
-    Tag.BigFloat -> exponentAndMantissa(dataItem) { e, m -> DataItem.Tagged.BigFloat(e, m) }
-    Tag.ToBase16 -> DataItem.Tagged.Unassigned(value(), dataItem) // TODO
-    Tag.ToBase64 -> DataItem.Tagged.Unassigned(value(), dataItem)// TODO
-    Tag.ToBase64Url -> DataItem.Tagged.Unassigned(value(), dataItem)// TODO
-    Tag.CborDataItem -> DataItem.Tagged.DborDataItem(expected(dataItem))
-    Tag.SelfDescribedCbor -> DataItem.Tagged.SelfDescribedCbor(dataItem)
-    Tag.Uri -> DataItem.Tagged.EncodedText.Uri(expected(dataItem))
-    Tag.Base64Url -> DataItem.Tagged.EncodedText.Base64Url(expected(dataItem))
-    Tag.Base64 -> DataItem.Tagged.EncodedText.Base64(expected(dataItem))
-    Tag.Regex -> DataItem.Tagged.EncodedText.Regex(expected(dataItem))
-    Tag.Mime -> DataItem.Tagged.StandardDateTimeString(expected(dataItem))
-    Tag.FullDate -> DataItem.Tagged.FullDateTime(expected(dataItem))
+            Tag.BigNumUnsigned -> DataItem.Tagged.BigNumUnsigned(expected(dataItem))
+            Tag.BigNumNegative -> DataItem.Tagged.BigNumNegative(expected(dataItem))
+            Tag.DecimalFraction -> exponentAndMantissa(dataItem) { e, m -> DataItem.Tagged.DecimalFraction(e, m) }
+            Tag.BigFloat -> exponentAndMantissa(dataItem) { e, m -> DataItem.Tagged.BigFloat(e, m) }
+            Tag.ToBase16 -> DataItem.Tagged.Unsupported(value(), dataItem) // TODO
+            Tag.ToBase64 -> DataItem.Tagged.Unsupported(value(), dataItem)// TODO
+            Tag.ToBase64Url -> DataItem.Tagged.Unsupported(value(), dataItem)// TODO
+            Tag.CborDataItem -> DataItem.Tagged.DborDataItem(expected(dataItem))
+            Tag.SelfDescribedCbor -> DataItem.Tagged.SelfDescribedCbor(dataItem)
+            Tag.Uri -> DataItem.Tagged.EncodedText.Uri(expected(dataItem))
+            Tag.Base64Url -> DataItem.Tagged.EncodedText.Base64Url(expected(dataItem))
+            Tag.Base64 -> DataItem.Tagged.EncodedText.Base64(expected(dataItem))
+            Tag.Regex -> DataItem.Tagged.EncodedText.Regex(expected(dataItem))
+            Tag.Mime -> DataItem.Tagged.EncodedText.Mime(expected(dataItem))
+            Tag.FullDate -> DataItem.Tagged.FullDateTime(expected(dataItem))
+        }
+    }
 }
 
 private inline fun <reified DI : DataItem> Tag.expected(di: DataItem): DI {
@@ -105,5 +109,4 @@ private fun <DI> Tag.exponentAndMantissa(dataItem: DataItem, cons: (DataItem.Int
     val array = expected<DataItem.Array>(dataItem)
     require(array.size == 2) { "Array must have 2 elements" }
     return cons(expected(array[0]), expected(array[1]))
-
 }

@@ -59,16 +59,16 @@ private fun Source.readDataItemOrBreak(): DataItemOrBreak {
 }
 
 @Throws(IOException::class)
-private fun Source.readUnsigntInteger(additionalInfo: AdditionalInfo): DataItem.UnsignedInteger {
+private fun Source.readUnsigntInteger(additionalInfo: AdditionalInfo): DataItem.Integer.Unsigned {
     val value = readUnsignedInt(additionalInfo)
-    return DataItem.UnsignedInteger(value)
+    return DataItem.Integer.Unsigned(value)
 }
 
 @Throws(IOException::class)
-private fun Source.readNegativeInteger(additionalInfo: AdditionalInfo): DataItem.NegativeInteger {
+private fun Source.readNegativeInteger(additionalInfo: AdditionalInfo): DataItem.Integer.Negative {
     val value = readUnsignedInt(additionalInfo)
     val bigValue = -BigInteger.ONE - BigInteger(value.toString())
-    return DataItem.NegativeInteger(bigValue)
+    return DataItem.Integer.Negative(bigValue)
 }
 
 private const val BRAKE_BYTE: UByte = 0b111_11111u
@@ -143,28 +143,28 @@ private fun Source.readTagged(additionalInfo: AdditionalInfo): DataItem.Tagged<*
     val tag = readUnsignedInt(additionalInfo)
     val dataItem = readDataItem()
     return when (val supportedTag = Tag.of(tag)) {
-        null -> DataItem.Tagged.Unassigned(tag, dataItem)
-        else -> supportedTag.withItem(dataItem)
+        null -> DataItem.Tagged.Unsupported(tag, dataItem)
+        else -> dataItem.tagged(supportedTag)
     }
 }
 
 @Throws(IOException::class)
 private fun Source.readMajorSeven(additionalInfo: AdditionalInfo): DataItemOrBreak =
         when (additionalInfo.value.toInt()) {
-            in 0..19 -> DataItem.SimpleType.Unassigned(additionalInfo.value).orBreak()
+            in 0..19 -> DataItem.Unassigned(additionalInfo.value).orBreak()
             20 -> DataItem.Bool(false).orBreak()
             21 -> DataItem.Bool(true).orBreak()
             22 -> DataItem.Null.orBreak()
             23 -> DataItem.Undefined.orBreak()
             24 -> when (val next = readUByte()) {
-                in 0.toUByte()..31.toUByte() -> DataItem.SimpleType.Reserved(next)
-                else -> DataItem.SimpleType.Unassigned(next)
+                in 0.toUByte()..31.toUByte() -> DataItem.Reserved(next)
+                else -> DataItem.Unassigned(next)
             }.orBreak()
 
             25 -> DataItem.HalfPrecisionFloat(floatFromHalfBits(readShort())).orBreak()
             26 -> DataItem.SinglePrecisionFloat(Float.fromBits(readInt())).orBreak()
             27 -> DataItem.DoublePrecisionFloat(Double.fromBits(readLong())).orBreak()
-            in 28..30 -> DataItem.SimpleType.Unassigned(additionalInfo.value).orBreak()
+            in 28..30 -> DataItem.Unassigned(additionalInfo.value).orBreak()
             31 -> DataItemOrBreak.Break
             else -> error("Not supported")
         }

@@ -10,15 +10,15 @@ typealias KeyMapper<K> = (K) -> String?
 data class KeyOptions(
         val booKeyMapper: KeyMapper<Key.BoolKey>? = null,
         val byteStringKeyMapper: KeyMapper<Key.ByteStringKey>? = null,
-        val negativeIntegerKeyMapper: KeyMapper<Key.NegativeIntegerKey>? = null,
-        val unsignedIntegerKeyMapper: KeyMapper<Key.UnsignedIntegerKey>? = null
+        val integerKeyMapper: KeyMapper<Key.IntegerKey>? = null,
+
 ) {
     companion object {
         val UseOnlyTextKey: KeyOptions = KeyOptions(
                 booKeyMapper = null,
                 byteStringKeyMapper = null,
-                negativeIntegerKeyMapper = null,
-                unsignedIntegerKeyMapper = null
+                integerKeyMapper = null,
+
         )
     }
 }
@@ -33,8 +33,8 @@ data class ToJsonOptions(
 
 fun toJson(cbor: DataItem, options: ToJsonOptions = ToJsonOptions.Default): JsonElement {
     return when (cbor) {
-        is DataItem.UnsignedInteger -> JsonPrimitive(cbor.value)
-        is DataItem.NegativeInteger -> JsonPrimitive(cbor.value)
+        is DataItem.Integer.Unsigned -> JsonPrimitive(cbor.value)
+        is DataItem.Integer.Negative -> JsonPrimitive(cbor.value)
         is DataItem.ByteString -> JsonPrimitive(Base64.UrlSafe.encode(cbor.bytes))
         is DataItem.TextString -> JsonPrimitive(cbor.text)
         is DataItem.Array -> cbor.mapNotNull { toJson(it, options) }.let(::JsonArray)
@@ -45,8 +45,7 @@ fun toJson(cbor: DataItem, options: ToJsonOptions = ToJsonOptions.Default): Json
                 val jsonKey = when (k) {
                     is Key.BoolKey -> keyOptions.booKeyMapper?.invoke(k)
                     is Key.ByteStringKey -> keyOptions.byteStringKeyMapper?.invoke(k)
-                    is Key.NegativeIntegerKey -> keyOptions.negativeIntegerKeyMapper?.invoke(k)
-                    is Key.UnsignedIntegerKey -> keyOptions.unsignedIntegerKeyMapper?.invoke(k)
+                    is Key.IntegerKey -> keyOptions.integerKeyMapper?.invoke(k)
                     is Key.TextStringKey -> k.item.text
                 }
                 
@@ -70,7 +69,7 @@ fun toJson(cbor: DataItem, options: ToJsonOptions = ToJsonOptions.Default): Json
             is DataItem.Tagged.EncodedText -> toJson(cbor.content, options)
             is DataItem.Tagged.DborDataItem -> toJson(decode(cbor.content.bytes), options)
             is DataItem.Tagged.SelfDescribedCbor -> toJson(cbor.content, options)
-            is DataItem.Tagged.Unassigned -> JsonNull
+            is DataItem.Tagged.Unsupported -> JsonNull
             is DataItem.Tagged.FullDateTime -> toJson(cbor.content, options)
         }
 
@@ -78,8 +77,8 @@ fun toJson(cbor: DataItem, options: ToJsonOptions = ToJsonOptions.Default): Json
         is DataItem.HalfPrecisionFloat -> JsonPrimitive(cbor.value)
         is DataItem.SinglePrecisionFloat -> JsonPrimitive(cbor.value)
         is DataItem.DoublePrecisionFloat -> JsonPrimitive(cbor.value)
-        is DataItem.SimpleType.Reserved -> JsonNull
-        is DataItem.SimpleType.Unassigned -> JsonNull
+        is DataItem.Reserved -> JsonNull
+        is DataItem.Unassigned -> JsonNull
         DataItem.Undefined -> JsonNull
         DataItem.Null -> JsonNull
     }
