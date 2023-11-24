@@ -20,7 +20,9 @@ internal sealed interface Tag {
     data object Regex : Tag
     data object Mime : Tag
     data object SelfDescribedCbor : Tag
-    data object FullDate : Tag
+
+    data object CalendarDay : Tag
+    data object CalendarDate : Tag
 
     companion object {
         fun of(x: ULong): Tag? = when (x) {
@@ -40,7 +42,8 @@ internal sealed interface Tag {
             35uL -> Regex
             36uL -> Mime
             55799uL -> SelfDescribedCbor
-            1004uL -> FullDate
+            100uL -> CalendarDay
+            1004uL -> CalendarDate
             else -> null
         }
     }
@@ -63,9 +66,9 @@ internal fun Tag.value(): ULong = when (this) {
     Tag.Regex -> 35uL
     Tag.Mime -> 36uL
     Tag.SelfDescribedCbor -> 55799uL
-    Tag.FullDate -> 1004.toULong()
+    Tag.CalendarDay -> 100uL
+    Tag.CalendarDate -> 1004uL
 }
-
 
 internal fun DataItem.tagged(tag: Tag): DataItem.Tagged<DataItem> {
     val dataItem = this
@@ -95,14 +98,15 @@ internal fun DataItem.tagged(tag: Tag): DataItem.Tagged<DataItem> {
             Tag.Base64 -> DataItem.Tagged.EncodedText.Base64(expected(dataItem))
             Tag.Regex -> DataItem.Tagged.EncodedText.Regex(expected(dataItem))
             Tag.Mime -> DataItem.Tagged.EncodedText.Mime(expected(dataItem))
-            Tag.FullDate -> DataItem.Tagged.FullDateTime(expected(dataItem))
+            Tag.CalendarDay -> DataItem.Tagged.CalendarDay(expected(dataItem))
+            Tag.CalendarDate -> DataItem.Tagged.CalendarDate(expected(dataItem))
         }
     }
 }
 
-private inline fun <reified DI : DataItem> Tag.expected(di: DataItem): DI {
-    require(di is DI) { "$di is not valid for $this. Expecting ${DI::class.java}" }
-    return di
+private inline fun <reified DI : DataItem> Tag.expected(dataItem: DataItem): DI {
+    require(dataItem is DI) { "$dataItem is not valid for $this. Expecting ${DI::class.java}" }
+    return dataItem
 }
 
 private fun <DI> Tag.exponentAndMantissa(dataItem: DataItem, cons: (DataItem.Integer, DataItem.Integer) -> DI): DI {

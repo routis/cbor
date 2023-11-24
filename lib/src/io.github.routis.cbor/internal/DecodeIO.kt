@@ -123,7 +123,7 @@ private fun Source.readMap(size: Size): DataItem.CborMap {
     val items = buildMap {
 
         fun put(item: DataItem) {
-            val key = Key(item).getOrThrow()
+            val key = Key(item) ?: error("$item cannot be used as key")
             check(!contains(key)) { "Duplicate $key" }
             val value = readDataItem()
             put(key, value)

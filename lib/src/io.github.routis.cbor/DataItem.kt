@@ -58,6 +58,7 @@ sealed interface DataItem {
 
     /**
      * A tagged [DataItem]
+     * @param DI the type of the content
      */
     sealed interface Tagged<out DI : DataItem> : DataItem {
         val content: DI
@@ -100,7 +101,8 @@ sealed interface DataItem {
             data class Uri(override val content: TextString) : EncodedText
         }
 
-        data class FullDateTime(override val content: TextString) : Tagged<TextString>
+        data class CalendarDay(override val content: Integer): Tagged<Integer>
+        data class CalendarDate(override val content: TextString) : Tagged<TextString>
         data class Unsupported(val tag: ULong, override val content: DataItem) : Tagged<DataItem>
 
     }
