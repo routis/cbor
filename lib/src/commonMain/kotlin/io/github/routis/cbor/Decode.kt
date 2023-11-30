@@ -6,7 +6,7 @@ import kotlin.io.encoding.Base64
 
 
 fun decodeBase64UrlSafe(source: String): DataItem {
-    val bytes = Base64.UrlSafe.decode(source.toByteArray())
+    val bytes = Base64.UrlSafe.decode(source)
     return decode(bytes)
 }
 

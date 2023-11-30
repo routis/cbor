@@ -10,17 +10,13 @@ sealed interface Key<out DI : DataItem> {
      */
     val item: DI
 
-    @JvmInline
-    value class BoolKey(override val item: DataItem.Bool) : Key<DataItem.Bool>
+   data class BoolKey(override val item: DataItem.Bool) : Key<DataItem.Bool>
 
-    @JvmInline
-    value class ByteStringKey(override val item: DataItem.ByteString) : Key<DataItem.ByteString>
+    data class ByteStringKey(override val item: DataItem.ByteString) : Key<DataItem.ByteString>
 
-    @JvmInline
-    value class IntegerKey(override val item: DataItem.Integer) : Key<DataItem.Integer>
+    data class IntegerKey(override val item: DataItem.Integer) : Key<DataItem.Integer>
 
-    @JvmInline
-    value class TextStringKey(override val item: DataItem.TextString) : Key<DataItem.TextString>
+    data class TextStringKey(override val item: DataItem.TextString) : Key<DataItem.TextString>
 
     companion object {
 

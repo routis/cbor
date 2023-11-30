@@ -12,22 +12,22 @@ internal enum class MajorType {
         operator fun invoke(initialByte: UByte): MajorType {
             val highOrder3Bits = (initialByte.toInt() and 0b11100000) shr 5
             return when (highOrder3Bits) {
-                0 -> MajorType.Zero
-                1 -> MajorType.One
-                2 -> MajorType.Two
-                3 -> MajorType.Three
-                4 -> MajorType.Four
-                5 -> MajorType.Five
-                6 -> MajorType.Six
-                7 -> MajorType.Seven
+                0 -> Zero
+                1 -> One
+                2 -> Two
+                3 -> Three
+                4 -> Four
+                5 -> Five
+                6 -> Six
+                7 -> Seven
                 else -> error("Cannot happen, since we use only 3bits")
             }
         }
     }
 }
 
-@JvmInline
-internal value class AdditionalInfo private constructor(val value: UByte): Comparable<AdditionalInfo> {
+
+internal class AdditionalInfo private constructor(val value: UByte): Comparable<AdditionalInfo> {
     init{
         require(value  in ZERO .. THIRTY_ONE) {"Value should be betweem $ZERO .. $THIRTY_ONE"}
     }

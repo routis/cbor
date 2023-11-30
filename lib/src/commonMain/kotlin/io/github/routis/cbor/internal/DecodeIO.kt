@@ -3,7 +3,6 @@ package io.github.routis.cbor.internal
 import io.github.routis.cbor.DataItem
 import io.github.routis.cbor.Key
 import kotlinx.io.*
-import java.math.BigInteger
 import kotlin.contracts.contract
 
 /**
@@ -11,8 +10,7 @@ import kotlin.contracts.contract
  * get either a [DataItemOrBreak.Item] or a [DataItemOrBreak.Break]
  */
 private sealed interface DataItemOrBreak {
-    @JvmInline
-    value class Item(val item: DataItem) : DataItemOrBreak
+    data class Item(val item: DataItem) : DataItemOrBreak
     data object Break : DataItemOrBreak
 }
 
@@ -44,7 +42,7 @@ private fun Source.readDataItemOrBreak(): DataItemOrBreak {
     val additionalInfo = AdditionalInfo(initialByte)
 
     fun readSizeThen(block: (Size) -> DataItem): DataItem =
-            readSize(additionalInfo).let(block)
+        readSize(additionalInfo).let(block)
 
     return when (majorType) {
         MajorType.Zero -> readUnsigntInteger(additionalInfo).orBreak()
@@ -149,24 +147,24 @@ private fun Source.readTagged(additionalInfo: AdditionalInfo): DataItem.Tagged<*
 
 @Throws(IOException::class)
 private fun Source.readMajorSeven(additionalInfo: AdditionalInfo): DataItemOrBreak =
-        when (additionalInfo.value.toInt()) {
-            in 0..19 -> DataItem.Unassigned(additionalInfo.value).orBreak()
-            20 -> DataItem.Bool(false).orBreak()
-            21 -> DataItem.Bool(true).orBreak()
-            22 -> DataItem.Null.orBreak()
-            23 -> DataItem.Undefined.orBreak()
-            24 -> when (val next = readUByte()) {
-                in 0.toUByte()..31.toUByte() -> DataItem.Reserved(next)
-                else -> DataItem.Unassigned(next)
-            }.orBreak()
+    when (additionalInfo.value.toInt()) {
+        in 0..19 -> DataItem.Unassigned(additionalInfo.value).orBreak()
+        20 -> DataItem.Bool(false).orBreak()
+        21 -> DataItem.Bool(true).orBreak()
+        22 -> DataItem.Null.orBreak()
+        23 -> DataItem.Undefined.orBreak()
+        24 -> when (val next = readUByte()) {
+            in 0.toUByte()..31.toUByte() -> DataItem.Reserved(next)
+            else -> DataItem.Unassigned(next)
+        }.orBreak()
 
-            25 -> DataItem.HalfPrecisionFloat(floatFromHalfBits(readShort())).orBreak()
-            26 -> DataItem.SinglePrecisionFloat(Float.fromBits(readInt())).orBreak()
-            27 -> DataItem.DoublePrecisionFloat(Double.fromBits(readLong())).orBreak()
-            in 28..30 -> DataItem.Unassigned(additionalInfo.value).orBreak()
-            31 -> DataItemOrBreak.Break
-            else -> error("Not supported")
-        }
+        25 -> DataItem.HalfPrecisionFloat(floatFromHalfBits(readShort())).orBreak()
+        26 -> DataItem.SinglePrecisionFloat(Float.fromBits(readInt())).orBreak()
+        27 -> DataItem.DoublePrecisionFloat(Double.fromBits(readLong())).orBreak()
+        in 28..30 -> DataItem.Unassigned(additionalInfo.value).orBreak()
+        31 -> DataItemOrBreak.Break
+        else -> error("Not supported")
+    }
 
 /**
  * Reads the next [DataItem] until it finds a break.
@@ -191,9 +189,7 @@ private inline fun repeat(times: ULong, action: (ULong) -> Unit) {
 
 private sealed interface Size {
     data object Indefinite : Size
-
-    @JvmInline
-    value class Definite(val value: ULong) : Size
+    data class Definite(val value: ULong) : Size
 }
 
 
@@ -201,8 +197,8 @@ private const val indefiniteLengthIndicator: UByte = 31u
 
 @Throws(IOException::class)
 private fun Source.readSize(additionalInfo: AdditionalInfo): Size =
-        if (additionalInfo.value == indefiniteLengthIndicator) Size.Indefinite
-        else Size.Definite(readUnsignedInt(additionalInfo))
+    if (additionalInfo.value == indefiniteLengthIndicator) Size.Indefinite
+    else Size.Definite(readUnsignedInt(additionalInfo))
 
 
 /**
