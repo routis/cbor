@@ -37,7 +37,7 @@ kotlin {
 
         val commonTest by getting {
             dependencies {
-                implementation("com.squareup.okio:okio:3.5.0")
+                implementation("com.squareup.okio:okio:3.6.0")
                 implementation(kotlin("test"))
             }
         }
