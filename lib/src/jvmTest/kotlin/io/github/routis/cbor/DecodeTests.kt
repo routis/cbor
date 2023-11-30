@@ -1,11 +1,6 @@
 package io.github.routis.cbor
 
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.*
-import org.junit.jupiter.api.DynamicTest
-import org.junit.jupiter.api.DynamicTest.dynamicTest
-import org.junit.jupiter.api.TestFactory
-import org.junit.jupiter.api.assertDoesNotThrow
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
