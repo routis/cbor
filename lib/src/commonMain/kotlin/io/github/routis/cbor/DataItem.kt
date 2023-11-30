@@ -23,9 +23,9 @@ sealed interface DataItem {
          * Negative integer in the range -2^64..-1 inclusive
          */
         @JvmInline
-        value class Negative(val value: BigInteger) : Integer {
-            init {
-                require(value <= -BigInteger.ONE) { "Value should be in range -2^64..-1 inclusive" }
+        value class Negative(val value: ULong) : Integer {
+             init {
+                require(value >= 0uL) { "Value should be in range 0..2^64-1" }
             }
         }
     }

@@ -48,7 +48,7 @@ class DecodeTests {
                 0xF3.toByte(),
         )
         val decoded = decode(bytes)
-        assertEquals(DataItem.Integer.Negative((-500L).toBigInteger()), decoded)
+        assertEquals(DataItem.Integer.Negative(499uL), decoded)
     }
 
     @Test

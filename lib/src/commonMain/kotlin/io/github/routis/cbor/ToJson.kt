@@ -33,7 +33,7 @@ fun toJson(dataItem: DataItem, options: ToJsonOptions = ToJsonOptions.Default): 
 
     fun convert(item: DataItem): JsonElement = when (item) {
         is DataItem.Integer.Unsigned -> JsonPrimitive(item.value)
-        is DataItem.Integer.Negative -> JsonPrimitive(item.value)
+        is DataItem.Integer.Negative -> JsonPrimitive(item.asNumber())
         is DataItem.ByteString -> JsonPrimitive(Base64.UrlSafe.encode(item.bytes))
         is DataItem.TextString -> JsonPrimitive(item.text)
         is DataItem.Array -> item.map(::convert).let(::JsonArray)
@@ -85,7 +85,3 @@ fun toJson(dataItem: DataItem, options: ToJsonOptions = ToJsonOptions.Default): 
 
     return convert(dataItem)
 }
-
-private fun DataItem.Tagged.BigNumUnsigned.asNumber(): Number = content.asBigInteger() // TODO this is java specific
-private fun DataItem.Tagged.BigNumNegative.asNumber(): Number = -BigInteger.ONE - content.asBigInteger() // TODO this is java specific
-private fun DataItem.ByteString.asBigInteger(): BigInteger = BigInteger(bytes) // TODO this is java specific
