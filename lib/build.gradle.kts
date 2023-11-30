@@ -45,7 +45,7 @@ kotlin {
         val jvmTest by getting{
             dependencies {
                 implementation(kotlin("test-junit5"))
-                implementation("org.junit.jupiter:junit-jupiter:5.8.0")
+                implementation("org.junit.jupiter:junit-jupiter:5.10.1")
             }
         }
 
