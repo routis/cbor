@@ -105,7 +105,7 @@ internal fun DataItem.tagged(tag: Tag): DataItem.Tagged<DataItem> {
 }
 
 private inline fun <reified DI : DataItem> Tag.expected(dataItem: DataItem): DI {
-    require(dataItem is DI) { "$dataItem is not valid for $this. Expecting ${DI::class.java}" }
+    require(dataItem is DI) { "$dataItem is not valid for $this. Expecting ${DI::class}" }
     return dataItem
 }
 

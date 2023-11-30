@@ -10,8 +10,7 @@ sealed interface DataItem {
         /**
          * Unsigned integer in the range 0..2^64-1 inclusive
          */
-        @JvmInline
-        value class Unsigned(val value: ULong) : Integer {
+        data class Unsigned(val value: ULong) : Integer {
             init {
                 require(value >= 0uL) { "Value should be in range 0..2^64-1" }
             }
@@ -20,8 +19,7 @@ sealed interface DataItem {
         /**
          * Negative integer in the range -2^64..-1 inclusive
          */
-        @JvmInline
-        value class Negative(val value: ULong) : Integer {
+        data class Negative(val value: ULong) : Integer {
             init {
                 require(value >= 0uL) { "Value should be in range 0..2^64-1" }
             }
@@ -31,28 +29,24 @@ sealed interface DataItem {
     /**
      * A "string" of [bytes]
      */
-    @JvmInline
-    value class ByteString(val bytes: ByteArray) : DataItem
+    data class ByteString(val bytes: ByteArray) : DataItem
 
     /**
      * A [text] string  encoded as UTF-8.
      */
-    @JvmInline
-    value class TextString(val text: String) : DataItem
+    data class TextString(val text: String) : DataItem
 
     /**
      * An array of data [items].
      * Items in an array do not need to all be of the same type
      */
-    @JvmInline
-    value class Array(private val items: List<DataItem>) : DataItem, List<DataItem> by items
+     class Array(private val items: List<DataItem>) : DataItem, List<DataItem> by items
 
     /**
      * A map (set of key value pairs)
      * Not all [DataItem] can be used as keys. Check [Key]
      */
-    @JvmInline
-    value class CborMap(private val items: Map<Key<*>, DataItem>) : DataItem, Map<Key<*>, DataItem> by items
+     class CborMap(private val items: Map<Key<*>, DataItem>) : DataItem, Map<Key<*>, DataItem> by items
 
     /**
      * A tagged [DataItem]
@@ -105,25 +99,19 @@ sealed interface DataItem {
 
     }
 
-    @JvmInline
-    value class Bool(val value: Boolean) : DataItem
+    data class Bool(val value: Boolean) : DataItem
 
-    @JvmInline
-    value class HalfPrecisionFloat(val value: Float) : DataItem
+    data class HalfPrecisionFloat(val value: Float) : DataItem
 
-    @JvmInline
-    value class SinglePrecisionFloat(val value: Float) : DataItem
+    data class SinglePrecisionFloat(val value: Float) : DataItem
 
-    @JvmInline
-    value class DoublePrecisionFloat(val value: Double) : DataItem
+    data class DoublePrecisionFloat(val value: Double) : DataItem
 
     data object Null : DataItem
     data object Undefined : DataItem
 
-    @JvmInline
-    value class Unassigned(val value: UByte) : DataItem
+    data class Unassigned(val value: UByte) : DataItem
 
-    @JvmInline
-    value class Reserved(val value: UByte) : DataItem
+    data class Reserved(val value: UByte) : DataItem
 
 }
