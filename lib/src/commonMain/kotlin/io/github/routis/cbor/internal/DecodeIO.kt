@@ -67,8 +67,7 @@ private fun Source.readUnsigntInteger(additionalInfo: AdditionalInfo): DataItem.
 @Throws(IOException::class)
 private fun Source.readNegativeInteger(additionalInfo: AdditionalInfo): DataItem.Integer.Negative {
     val value = readUnsignedInt(additionalInfo)
-    val bigValue = -BigInteger.ONE - BigInteger(value.toString())
-    return DataItem.Integer.Negative(bigValue)
+    return DataItem.Integer.Negative(value)
 }
 
 private const val BRAKE_BYTE: UByte = 0b111_11111u
