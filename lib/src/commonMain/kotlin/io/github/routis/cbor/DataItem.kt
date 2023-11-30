@@ -1,7 +1,5 @@
 package io.github.routis.cbor
 
-import java.math.BigInteger
-
 sealed interface DataItem {
 
     /**
@@ -24,7 +22,7 @@ sealed interface DataItem {
          */
         @JvmInline
         value class Negative(val value: ULong) : Integer {
-             init {
+            init {
                 require(value >= 0uL) { "Value should be in range 0..2^64-1" }
             }
         }
@@ -101,7 +99,7 @@ sealed interface DataItem {
             data class Uri(override val content: TextString) : EncodedText
         }
 
-        data class CalendarDay(override val content: Integer): Tagged<Integer>
+        data class CalendarDay(override val content: Integer) : Tagged<Integer>
         data class CalendarDate(override val content: TextString) : Tagged<TextString>
         data class Unsupported(val tag: ULong, override val content: DataItem) : Tagged<DataItem>
 

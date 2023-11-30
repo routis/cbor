@@ -5,11 +5,6 @@ plugins {
 
 }
 
-repositories {
-    mavenCentral()
-    google()
-}
-
 kotlin {
 
     jvm {

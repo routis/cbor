@@ -1,7 +1,6 @@
 package io.github.routis.cbor
 
 import kotlinx.serialization.json.*
-import java.math.BigInteger
 import kotlin.io.encoding.Base64
 
 
