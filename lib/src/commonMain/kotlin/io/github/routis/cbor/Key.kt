@@ -24,6 +24,7 @@ sealed interface Key<out DI : DataItem> {
          * Creates a [Key] for the given [dataItem]
          * In case the [dataItem] cannot be used as a kay a `null` is being returned.
          */
+        @JvmStatic
         operator fun invoke(dataItem: DataItem): Key<DataItem>? =
                 when (dataItem) {
                     is DataItem.Bool -> BoolKey(dataItem)

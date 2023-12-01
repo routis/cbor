@@ -19,7 +19,7 @@ kotlin {
     sourceSets {
         all {
             languageSettings.apply {
-                enableLanguageFeature("ContextReceivers") // language feature name
+                //enableLanguageFeature("ContextReceivers") // language feature name
                 optIn("kotlin.io.encoding.ExperimentalEncodingApi")
                 optIn("kotlin.ExperimentalStdlibApi")
                 optIn("kotlin.ExperimentalUnsignedTypes")
