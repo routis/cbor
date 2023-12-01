@@ -2,6 +2,7 @@ package io.github.routis.cbor.internal
 
 import io.github.routis.cbor.DataItem
 import io.github.routis.cbor.Key
+import io.github.routis.cbor.negate
 import kotlinx.io.*
 import kotlin.contracts.contract
 
@@ -34,7 +35,6 @@ internal fun Source.readDataItem(): DataItem {
 /**
  * Reads the next [DataItem] or break from the source.
  */
-@Throws(IOException::class)
 private fun Source.readDataItemOrBreak(): DataItemOrBreak {
 
     val initialByte = readUByte()
@@ -45,8 +45,8 @@ private fun Source.readDataItemOrBreak(): DataItemOrBreak {
         readSize(additionalInfo).let(block)
 
     return when (majorType) {
-        MajorType.Zero -> readUnsigntInteger(additionalInfo).orBreak()
-        MajorType.One -> readNegativeInteger(additionalInfo).orBreak()
+        MajorType.Zero -> readUnsignedInteger(additionalInfo).orBreak()
+        MajorType.One -> readUnsignedInteger(additionalInfo).negate().orBreak()
         MajorType.Two -> readSizeThen(::readByteString).orBreak()
         MajorType.Three -> readSizeThen(::readTextString).orBreak()
         MajorType.Four -> readSizeThen(::readArray).orBreak()
@@ -56,21 +56,14 @@ private fun Source.readDataItemOrBreak(): DataItemOrBreak {
     }
 }
 
-@Throws(IOException::class)
-private fun Source.readUnsigntInteger(additionalInfo: AdditionalInfo): DataItem.Integer.Unsigned {
+private fun Source.readUnsignedInteger(additionalInfo: AdditionalInfo): DataItem.Integer.Unsigned {
     val value = readUnsignedInt(additionalInfo)
     return DataItem.Integer.Unsigned(value)
 }
 
-@Throws(IOException::class)
-private fun Source.readNegativeInteger(additionalInfo: AdditionalInfo): DataItem.Integer.Negative {
-    val value = readUnsignedInt(additionalInfo)
-    return DataItem.Integer.Negative(value)
-}
 
 private const val BRAKE_BYTE: UByte = 0b111_11111u
 
-@Throws(IOException::class)
 private fun Source.readByteString(size: Size): DataItem.ByteString {
     val byteCount = when (size) {
         Size.Indefinite -> indexOf(BRAKE_BYTE.toByte())
@@ -80,7 +73,6 @@ private fun Source.readByteString(size: Size): DataItem.ByteString {
     return DataItem.ByteString(bytes)
 }
 
-@Throws(IOException::class)
 private fun Source.readTextString(size: Size): DataItem.TextString {
     val text = when (size) {
 
@@ -103,7 +95,6 @@ private fun Source.readTextString(size: Size): DataItem.TextString {
     return DataItem.TextString(text)
 }
 
-@Throws(IOException::class)
 private fun Source.readArray(size: Size): DataItem.Array {
     val items = buildList {
         when (size) {
@@ -114,7 +105,6 @@ private fun Source.readArray(size: Size): DataItem.Array {
     return DataItem.Array(items)
 }
 
-@Throws(IOException::class)
 private fun Source.readMap(size: Size): DataItem.CborMap {
 
     val items = buildMap {
@@ -135,7 +125,6 @@ private fun Source.readMap(size: Size): DataItem.CborMap {
     return DataItem.CborMap(items)
 }
 
-@Throws(IOException::class)
 private fun Source.readTagged(additionalInfo: AdditionalInfo): DataItem.Tagged<*> {
     val tag = readUnsignedInt(additionalInfo)
     val dataItem = readDataItem()
@@ -145,7 +134,6 @@ private fun Source.readTagged(additionalInfo: AdditionalInfo): DataItem.Tagged<*
     }
 }
 
-@Throws(IOException::class)
 private fun Source.readMajorSeven(additionalInfo: AdditionalInfo): DataItemOrBreak =
     when (additionalInfo.value.toInt()) {
         in 0..19 -> DataItem.Unassigned(additionalInfo.value).orBreak()
@@ -170,7 +158,6 @@ private fun Source.readMajorSeven(additionalInfo: AdditionalInfo): DataItemOrBre
  * Reads the next [DataItem] until it finds a break.
  * For each [DataItem] the callback [useDataItem] is being invoked
  */
-@Throws(IOException::class)
 private fun Source.untilBreak(useDataItem: (DataItem) -> Unit) {
     do {
         val dataItemOrBreak = readDataItemOrBreak()
@@ -195,23 +182,21 @@ private sealed interface Size {
 
 private const val indefiniteLengthIndicator: UByte = 31u
 
-@Throws(IOException::class)
 private fun Source.readSize(additionalInfo: AdditionalInfo): Size =
     if (additionalInfo.value == indefiniteLengthIndicator) Size.Indefinite
     else Size.Definite(readUnsignedInt(additionalInfo))
 
 
 /**
- * Reads from the [Source] an unsinged integer, using the [additionalInfo] as follows:
+ * Reads from the [Source] an unsigned integer, using the [additionalInfo] as follows:
  * - if [additionalInfo] is less than 24, the result is the additional info itself
  * - if [additionalInfo] is 24, 25, 26 or 27 The argument's value is held in the following 1, 2, 4, or 8 bytes,
  *   respectively, in network byte order
  *
- * @param additionalInfo the instuction on how to read the unsigned integer
+ * @param additionalInfo the instruction on how to read the unsigned integer
  * @receiver The [Source] to read from
- * @return the unsigned intger. Regardless of the case this always a [ULong]
+ * @return the unsigned integer. Regardless of the case this always a [ULong]
  */
-@Throws(IOException::class)
 private fun Source.readUnsignedInt(additionalInfo: AdditionalInfo): ULong {
 
     return when (additionalInfo.value.toInt()) {
@@ -224,14 +209,10 @@ private fun Source.readUnsignedInt(additionalInfo: AdditionalInfo): ULong {
     }.toULong()
 }
 
-@Throws(IOException::class)
 private fun Source.readUByte(): UByte = readByte().toUByte()
 
-@Throws(IOException::class)
 private fun Source.readUShort(): UShort = readShort().toUShort()
 
-@Throws(IOException::class)
 private fun Source.readUInt(): UInt = readInt().toUInt()
 
-@Throws(IOException::class)
 private fun Source.readULong(): ULong = readLong().toULong()

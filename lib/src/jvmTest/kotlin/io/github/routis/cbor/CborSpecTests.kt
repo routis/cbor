@@ -42,10 +42,7 @@ class CborSpecTests {
     }
 
 }
-val jsonSupport = Json {
-    prettyPrint = true
-    ignoreUnknownKeys = true
-}
+
 
 // https://github.com/cbor/test-vectors/blob/master/appendix_a.json
 

@@ -24,6 +24,7 @@ data class ToJsonOptions(
         val keyOptions: KeyOptions
 ) {
     companion object {
+        @JvmStatic
         val Default = ToJsonOptions(keyOptions = KeyOptions.UseOnlyTextKey)
     }
 }
