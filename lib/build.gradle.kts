@@ -1,8 +1,9 @@
-plugins {
-    kotlin("multiplatform") version "1.9.21"
-    kotlin("plugin.serialization") version "1.9.21"
-    id("org.jetbrains.kotlinx.kover") version "0.7.5"
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.libsDirectory
 
+plugins {
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.kotlinxKover)
 }
 
 kotlin {
@@ -29,26 +30,23 @@ kotlin {
         }
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.3.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.2")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+                implementation(libs.kotlinx.io.core)
+                implementation(libs.kotlinx.serialization.json)
             }
         }
 
         val commonTest by getting {
             dependencies {
-                implementation("com.squareup.okio:okio:3.6.0")
-                implementation(kotlin("test"))
+                implementation(libs.okio)
+                implementation(libs.kotlin.test)
             }
         }
 
-        val jvmTest by getting{
+        val jvmTest by getting {
             dependencies {
-                implementation(kotlin("test-junit5"))
-                implementation("org.junit.jupiter:junit-jupiter:5.10.1")
+                implementation(libs.kotlin.test.junit5)
+                implementation(libs.junit.jupiter)
             }
         }
-
-
     }
 }
