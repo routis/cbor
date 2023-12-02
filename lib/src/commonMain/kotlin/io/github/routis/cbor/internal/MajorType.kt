@@ -1,10 +1,5 @@
 package io.github.routis.cbor.internal
 
-/**
- * - [MajorType.Zero]: An unsigned integer in the range 0..264-1 inclusive
- * - [MajorType.One]
- *
- */
 internal enum class MajorType {
     Zero, One, Two, Three, Four, Five, Six, Seven;
 
@@ -27,15 +22,16 @@ internal enum class MajorType {
 }
 
 
-internal class AdditionalInfo private constructor(val value: UByte): Comparable<AdditionalInfo> {
-    init{
-        require(value  in ZERO .. THIRTY_ONE) {"Value should be betweem $ZERO .. $THIRTY_ONE"}
+internal class AdditionalInfo private constructor(val value: UByte) : Comparable<AdditionalInfo> {
+    init {
+        require(value in ZERO..THIRTY_ONE) { "Value should be betweem $ZERO .. $THIRTY_ONE" }
     }
+
     override fun compareTo(other: AdditionalInfo): Int = this.value.compareTo(other.value)
 
     companion object {
-        private const val ZERO : UByte = 0u
-        private const val THIRTY_ONE : UByte = 31u
+        private const val ZERO: UByte = 0u
+        private const val THIRTY_ONE: UByte = 31u
 
         operator fun invoke(initialByte: UByte): AdditionalInfo {
             val lowOrder5Bits = initialByte and 0b00011111.toUByte()
