@@ -46,7 +46,7 @@ class CborSpecTests {
                 decode(tv.bytes)
             }.also { println(it) }
 
-            val dataItemJson = assertDoesNotThrow("Failed toJson for ${dataItem.javaClass}") { toJson(dataItem) }
+            val dataItemJson = assertDoesNotThrow("Failed toJson for ${dataItem.javaClass}") { dataItem.toJson() }
             tv.decoded?.let { elem -> dataItem.assertJsonIs(elem, dataItemJson) }
 
         }

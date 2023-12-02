@@ -1,5 +1,7 @@
 package io.github.routis.cbor
 
+import kotlinx.io.*
+
 sealed interface DataItem {
 
     /**
@@ -14,6 +16,8 @@ sealed interface DataItem {
             init {
                 require(value >= 0uL) { "Value should be in range 0..2^64-1" }
             }
+
+            fun negate(): Negative = unaryMinus()
         }
 
         /**
@@ -24,6 +28,24 @@ sealed interface DataItem {
                 require(value >= 0uL) { "Value should be in range 0..2^64-1" }
             }
         }
+
+        companion object {
+
+            internal fun integerFrom(isZeroOrMore: Boolean, bytes: ByteArray) : Integer {
+                val value = Buffer().use { buffer ->
+                    buffer.write(bytes)
+                    when (bytes.size) {
+                        1 -> buffer.readUByte().toULong()
+                        2 -> buffer.readUShort().toULong()
+                        4 -> buffer.readUInt().toULong()
+                        8 -> buffer.readULong()
+                        else -> error("Not in CBOR integer range")
+                    }
+                }
+                return if (isZeroOrMore) Unsigned(value) else Negative(value)
+            }
+        }
+
     }
 
     /**
@@ -128,3 +150,9 @@ sealed interface DataItem {
     data class Reserved(val value: UByte) : DataItem
 
 }
+
+expect operator fun DataItem.Integer.Unsigned.unaryMinus(): DataItem.Integer.Negative
+expect fun DataItem.Integer.Unsigned.asNumber(): Number
+expect fun DataItem.Integer.Negative.asNumber(): Number
+expect fun DataItem.Tagged.BigNumUnsigned.asNumber(): Number
+expect fun DataItem.Tagged.BigNumNegative.asNumber(): Number

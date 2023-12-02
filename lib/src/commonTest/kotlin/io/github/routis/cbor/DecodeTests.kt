@@ -38,6 +38,7 @@ class DecodeTests {
     @Test
     fun `-500 should be represented as Major 1 with 499`() {
         val value499 = 499uL
+        0b001_11001.toHexString().also { println(it) }
         val bytes = byteArrayOf(
                 0b001_11001.toByte(),
                 0x01.toByte(),
@@ -50,20 +51,20 @@ class DecodeTests {
     @Test
     fun `vp_token should be decoded`() {
         decodeBase64UrlSafe(vpToken).also { cbor ->
-            toJson(cbor).also { println(jsonSupport.encodeToString(it)) }
+            cbor.toJson().also { println(jsonSupport.encodeToString(it)) }
         }
     }
 
     @Test
     fun `Sample msoMdoc should be decoded`() {
         decodeBase64UrlSafe(sampleMsoMdoc).also { cbor ->
-            toJson(cbor).also { println(jsonSupport.encodeToString(it)) }
+            cbor.toJson().also { println(jsonSupport.encodeToString(it)) }
         }
     }
     @Test
     fun `other should be decoded`() {
         decode(otherHex.hexToByteArray(format = HexFormat { upperCase=true })).also { cbor ->
-            toJson(cbor).also { println(jsonSupport.encodeToString(it)) }
+            cbor.toJson().also { println(jsonSupport.encodeToString(it)) }
         }
     }
 

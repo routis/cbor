@@ -15,7 +15,7 @@ private val normalizeBaseBits = SINGLE_PRECISION_NORMALIZE_BASE.toBits()
  * https://github.com/Kotlin/kotlinx.serialization/blob/master/formats/cbor/commonMain/src/kotlinx/serialization/cbor/internal/Encoding.kt#L665
  * For details about half-precision floating-point numbers see https://tools.ietf.org/html/rfc7049#appendix-D
  */
-fun floatFromHalfBits(bits: Short): Float {
+internal fun floatFromHalfBits(bits: Short): Float {
     val intBits = bits.toInt()
 
     val negative = (intBits and 0x8000) != 0

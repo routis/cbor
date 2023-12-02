@@ -1,3 +1,5 @@
+@file:JvmName("Decoder")
+
 package io.github.routis.cbor
 
 import io.github.routis.cbor.internal.readDataItem

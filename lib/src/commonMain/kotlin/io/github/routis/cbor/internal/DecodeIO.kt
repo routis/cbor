@@ -2,7 +2,6 @@ package io.github.routis.cbor.internal
 
 import io.github.routis.cbor.DataItem
 import io.github.routis.cbor.Key
-import io.github.routis.cbor.negate
 import kotlinx.io.*
 import kotlin.contracts.contract
 
