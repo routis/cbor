@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.libsDirectory
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinSerialization)
@@ -10,6 +8,7 @@ kotlin {
 
     jvm {
         jvmToolchain(17)
+        withJava()
         testRuns.named("test") {
             executionTask.configure {
                 useJUnitPlatform()
