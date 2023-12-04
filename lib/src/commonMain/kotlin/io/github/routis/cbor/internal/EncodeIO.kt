@@ -5,6 +5,7 @@ import kotlinx.io.Sink
 import kotlinx.io.writeDouble
 import kotlinx.io.writeFloat
 
+
 internal fun Sink.writeDataItem(item: DataItem) {
     when (item) {
         is DataItem.Integer.Unsigned -> writeInitialByteAndSize(MajorType.Zero, item.value)
@@ -26,12 +27,12 @@ internal fun Sink.writeDataItem(item: DataItem) {
         is DataItem.Array -> {
             val elementsNo = item.size.toULong()
             writeInitialByteAndSize(MajorType.Four, elementsNo)
-            item.forEach { writeDataItem(it) }
+            item.forEach { element -> writeDataItem(element) }
         }
 
         is DataItem.CborMap -> {
-            val keyValuePairsNo = item.size.toULong()
-            writeInitialByteAndSize(MajorType.Five, keyValuePairsNo)
+            val entriesNo = item.size.toULong()
+            writeInitialByteAndSize(MajorType.Five, entriesNo)
             item.forEach { (key, value) ->
                 writeDataItem(key.item)
                 writeDataItem(value)
@@ -44,9 +45,13 @@ internal fun Sink.writeDataItem(item: DataItem) {
             writeDataItem(item.content)
         }
 
-        is DataItem.Bool ->
-            if (!item.value) writeInitialByte(MajorType.Seven, AdditionalInfo(20u))
-            else writeInitialByte(MajorType.Seven, AdditionalInfo(21u))
+        is DataItem.Bool -> {
+            val additionalInfo = when {
+                !item.value -> AdditionalInfo(20u)
+                else -> AdditionalInfo(21u)
+            }
+            writeInitialByte(MajorType.Seven, additionalInfo)
+        }
 
         DataItem.Null -> writeInitialByte(MajorType.Seven, AdditionalInfo(22u))
         DataItem.Undefined -> writeInitialByte(MajorType.Seven, AdditionalInfo(23u))
@@ -57,8 +62,9 @@ internal fun Sink.writeDataItem(item: DataItem) {
 
         is DataItem.HalfPrecisionFloat -> {
             writeInitialByte(MajorType.Seven, AdditionalInfo(25u))
-            writeShort(fromFullPrecision(item.value))
+            writeShort(halfBitsFromFloat(item.value))
         }
+
         is DataItem.SinglePrecisionFloat -> {
             writeInitialByte(MajorType.Seven, AdditionalInfo(26u))
             writeFloat(item.value)
@@ -69,14 +75,11 @@ internal fun Sink.writeDataItem(item: DataItem) {
             writeDouble(item.value)
         }
 
-
         is DataItem.Unassigned -> {
-
             val (additionalInfo, next) = when (item.value) {
                 in 0u..19u -> AdditionalInfo(item.value) to null
                 in 28u..30u -> AdditionalInfo(item.value) to null
                 else -> AdditionalInfo(24u) to item.value.toByte()
-
             }
             writeInitialByte(MajorType.Seven, additionalInfo)
             next?.let { writeByte(it) }
@@ -84,15 +87,11 @@ internal fun Sink.writeDataItem(item: DataItem) {
     }
 }
 
+/**
+ * Calculates the closest [AdditionalInfo] of the given [size]
+ */
 private fun Sink.writeInitialByteAndSize(majorType: MajorType, size: ULong) {
-    val additionalInfo = when (size) {
-        in 0uL..<24uL -> AdditionalInfo(size.toUByte())
-        in 24uL..UByte.MAX_VALUE.toULong() -> AdditionalInfo(24u)
-        in (UByte.MAX_VALUE + 1u).toULong()..UShort.MAX_VALUE.toULong() -> AdditionalInfo(25u)
-        in (UShort.MAX_VALUE + 1u).toULong()..UInt.MAX_VALUE.toULong() -> AdditionalInfo(26u)
-        in (UInt.MAX_VALUE + 1u).toULong()..ULong.MAX_VALUE -> AdditionalInfo(27u)
-        else -> error("Invalid value")
-    }
+    val additionalInfo = AdditionalInfo.forSize(size)
     writeInitialByte(majorType, additionalInfo)
     when (additionalInfo.value.toInt()) {
         in 0..23 -> Unit
@@ -104,9 +103,14 @@ private fun Sink.writeInitialByteAndSize(majorType: MajorType, size: ULong) {
     }
 }
 
+/**
+ * [Calculates][initialByte] the initial byte using the given [majorType] & [additionalInfo]
+ * and writes it to the [Sink]
+ * @receiver the sink to write to the initial bye
+ */
 private fun Sink.writeInitialByte(majorType: MajorType, additionalInfo: AdditionalInfo) {
     val initialByte = initialByte(majorType, additionalInfo)
-    writeByte(initialByte)
+    writeByte(initialByte.toByte())
 }
 
 

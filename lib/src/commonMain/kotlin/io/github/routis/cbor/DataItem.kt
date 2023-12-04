@@ -31,6 +31,17 @@ sealed interface DataItem {
 
         companion object {
 
+            /**
+             * Creates a [DataItem.Integer]
+             *
+             * @param isZeroOrMore indicates whether the [DataItem.Integer] would be
+             * [positive][DataItem.Integer.Unsigned] or [negative][DataItem.Integer.Negative]
+             * @param bytes an array of 1, 2, 4, or 8 bytes representing [UByte], [UShort], [UInt]
+             * or [ULong] respectively
+             * @return the [DataItem.Integer] representing the given value
+             * @throws IllegalArgumentException in case the [bytes] represent
+             * a number outside the range 0..2^64-1 inclusive
+             */
             internal fun integerFrom(isZeroOrMore: Boolean, bytes: ByteArray) : Integer {
                 val value = Buffer().use { buffer ->
                     buffer.write(bytes)
@@ -39,7 +50,7 @@ sealed interface DataItem {
                         2 -> buffer.readUShort().toULong()
                         4 -> buffer.readUInt().toULong()
                         8 -> buffer.readULong()
-                        else -> error("Not in CBOR integer range")
+                        else -> error("Array should contain 1, 2, 4 or 8 bytes")
                     }
                 }
                 return if (isZeroOrMore) Unsigned(value) else Negative(value)

@@ -58,7 +58,7 @@ internal fun floatFromHalfBits(bits: Short): Float {
 
 
 // https://stackoverflow.com/questions/6162651/half-precision-floating-point-in-java
-internal fun fromFullPrecision(number: Float): Short {
+internal fun halfBitsFromFloat(number: Float): Short {
     val bits = number.toRawBits()
     val sign = bits ushr 16 and 0x8000
     val value = (bits and 0x7fffffff) + 0x1000
@@ -79,6 +79,4 @@ internal fun fromFullPrecision(number: Float): Short {
     }
 
     return result.toShort()
-
-
 }
