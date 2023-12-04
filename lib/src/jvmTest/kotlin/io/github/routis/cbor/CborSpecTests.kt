@@ -13,10 +13,28 @@ import kotlin.test.assertEquals
 
 class CborSpecTests {
     @TestFactory
-    fun appendixATests() = readTestVectors().map { createTestFor(it) }
+    fun appendixATests() = readTestVectors().map { decodeTest(it) }
 
 
-    private fun createTestFor(tv: TestVector): DynamicTest {
+    @TestFactory
+    fun appendixAEncodeTests() = readTestVectors()
+        .filter { it.roundTrip }
+        .map { encodeTest(it) }
+
+    private fun encodeTest(tv: TestVector): DynamicTest {
+        val dataItem = decode(tv.bytes).also { println(it) }
+
+        return dynamicTest("given a cbor \"${dataItem}\", when  encoded, then it should produce ${tv.hex}") {
+
+            val bytes = encode(dataItem)
+            val expected = tv.hex
+            val actual = bytes.toHexString()
+            assertEquals(expected, actual)
+
+        }
+    }
+
+    private fun decodeTest(tv: TestVector): DynamicTest {
 
         fun DataItem.assertJsonIs(expected: JsonElement, dataItemJson: JsonElement?) {
 

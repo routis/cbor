@@ -20,8 +20,7 @@ public class DecoderTests {
         var expectedDataItem = DataItemUtils.integerFrom(value);
         assertEquals(expectedDataItem, dataItem);
         var json = JsonConverter.toJson(dataItem);
-        assertInstanceOf(JsonPrimitive.class, json);
-        var jsonPrimitive = (JsonPrimitive) json;
+        var jsonPrimitive = assertInstanceOf(JsonPrimitive.class, json);
         assertEquals("" + value, jsonPrimitive.getContent());
     }
 
@@ -31,8 +30,7 @@ public class DecoderTests {
 
         var dataItem = DataItemUtils.integerFrom(BigInteger.valueOf(-500));
         var json = JsonConverter.toJson(dataItem);
-        assertInstanceOf(JsonPrimitive.class, json);
-        var jsonPrimitive = (JsonPrimitive) json;
+        var jsonPrimitive = assertInstanceOf(JsonPrimitive.class, json);
         assertEquals("-500", jsonPrimitive.getContent());
 
     }

@@ -5,7 +5,6 @@ package io.github.routis.cbor
 import kotlinx.io.*
 import java.math.BigInteger
 
-
 fun BigInteger.asIntegerDataItem(): DataItem.Integer =  integerFrom(this)
 
 @Throws(IllegalArgumentException::class)

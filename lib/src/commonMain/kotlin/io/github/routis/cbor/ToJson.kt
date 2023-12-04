@@ -67,7 +67,7 @@ fun DataItem.toJson(options: JsonOptions = JsonOptions.Default): JsonElement {
             is DataItem.Tagged.DecimalFraction -> TODO("Implement toJson for DecimalFraction")
             is DataItem.Tagged.BigFloat -> TODO("Implement toJson for BigFloat")
             is DataItem.Tagged.EncodedText -> convert(item.content)
-            is DataItem.Tagged.DborDataItem -> convert(decode(item.content.bytes))
+            is DataItem.Tagged.CborDataItem -> convert(decode(item.content.bytes))
             is DataItem.Tagged.SelfDescribedCbor -> convert(item.content)
             is DataItem.Tagged.Unsupported -> JsonNull
             is DataItem.Tagged.CalendarDay -> convert(item.content)

@@ -75,13 +75,13 @@ sealed interface DataItem {
      * An array of data [items].
      * Items in an array do not need to all be of the same type
      */
-     class Array(private val items: List<DataItem>) : DataItem, List<DataItem> by items
+     data class Array(private val items: List<DataItem>) : DataItem, List<DataItem> by items
 
     /**
      * A map (set of key value pairs)
      * Not all [DataItem] can be used as keys. Check [Key]
      */
-     class CborMap(private val items: Map<Key<*>, DataItem>) : DataItem, Map<Key<*>, DataItem> by items
+     data class CborMap(private val items: Map<Key<*>, DataItem>) : DataItem, Map<Key<*>, DataItem> by items
 
     /**
      * A tagged [DataItem]
@@ -116,7 +116,7 @@ sealed interface DataItem {
                 get() = Array(listOf(exponent, mantissa))
         }
 
-        data class DborDataItem(override val content: ByteString) : Tagged<ByteString>
+        data class CborDataItem(override val content: ByteString) : Tagged<ByteString>
 
         data class SelfDescribedCbor(override val content: DataItem) : Tagged<DataItem>
 
