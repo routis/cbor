@@ -70,6 +70,25 @@ internal fun Tag.value(): ULong = when (this) {
     Tag.CalendarDate -> 1004uL
 }
 
+internal fun DataItem.Tagged<*>.tagValue(): ULong = when (this) {
+    is DataItem.Tagged.StandardDateTimeString -> Tag.StandardDateTimeString.value()
+    is DataItem.Tagged.EpochBasedDateTime<*> -> Tag.EpochBasedDateTime.value()
+    is DataItem.Tagged.BigNumUnsigned -> Tag.BigNumUnsigned.value()
+    is DataItem.Tagged.BigNumNegative -> Tag.BigNumNegative.value()
+    is DataItem.Tagged.DecimalFraction -> Tag.DecimalFraction.value()
+    is DataItem.Tagged.BigFloat -> Tag.BigFloat.value()
+    is DataItem.Tagged.EncodedText.Base64 -> Tag.Base64.value()
+    is DataItem.Tagged.EncodedText.Base64Url -> Tag.Base64Url.value()
+    is DataItem.Tagged.EncodedText.Mime -> Tag.Mime.value()
+    is DataItem.Tagged.EncodedText.Regex -> Tag.Regex.value()
+    is DataItem.Tagged.EncodedText.Uri -> Tag.Uri.value()
+    is DataItem.Tagged.CborDataItem -> Tag.CborDataItem.value()
+    is DataItem.Tagged.SelfDescribedCbor -> Tag.SelfDescribedCbor.value()
+    is DataItem.Tagged.Unsupported -> tag
+    is DataItem.Tagged.CalendarDay -> Tag.CalendarDay.value()
+    is DataItem.Tagged.CalendarDate -> Tag.CalendarDate.value()
+}
+
 internal fun DataItem.tagged(tag: Tag): DataItem.Tagged<DataItem> {
     val dataItem = this
     return with(tag) {
@@ -91,7 +110,7 @@ internal fun DataItem.tagged(tag: Tag): DataItem.Tagged<DataItem> {
             Tag.ToBase16 -> DataItem.Tagged.Unsupported(value(), dataItem) // TODO
             Tag.ToBase64 -> DataItem.Tagged.Unsupported(value(), dataItem)// TODO
             Tag.ToBase64Url -> DataItem.Tagged.Unsupported(value(), dataItem)// TODO
-            Tag.CborDataItem -> DataItem.Tagged.DborDataItem(expected(dataItem))
+            Tag.CborDataItem -> DataItem.Tagged.CborDataItem(expected(dataItem))
             Tag.SelfDescribedCbor -> DataItem.Tagged.SelfDescribedCbor(dataItem)
             Tag.Uri -> DataItem.Tagged.EncodedText.Uri(expected(dataItem))
             Tag.Base64Url -> DataItem.Tagged.EncodedText.Base64Url(expected(dataItem))

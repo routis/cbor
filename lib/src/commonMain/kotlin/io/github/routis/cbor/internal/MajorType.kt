@@ -28,6 +28,23 @@ internal class AdditionalInfo private constructor(val value: UByte) : Comparable
     }
 
     override fun compareTo(other: AdditionalInfo): Int = this.value.compareTo(other.value)
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as AdditionalInfo
+
+        return value == other.value
+    }
+
+    override fun hashCode(): Int {
+        return value.hashCode()
+    }
+
+    override fun toString(): String {
+        return "AdditionalInfo(value=$value)"
+    }
+
 
     companion object {
         private const val ZERO: UByte = 0u
@@ -38,4 +55,20 @@ internal class AdditionalInfo private constructor(val value: UByte) : Comparable
             return AdditionalInfo(lowOrder5Bits)
         }
     }
+}
+
+internal fun initialByte(majorType: MajorType, additionalInfo: AdditionalInfo): Byte {
+    val highOrder3Bits = when (majorType) {
+        MajorType.Zero -> 0
+        MajorType.One -> 1
+        MajorType.Two -> 2
+        MajorType.Three ->3
+        MajorType.Four -> 4
+        MajorType.Five -> 5
+        MajorType.Six -> 6
+        MajorType.Seven -> 7
+    } shl 5
+
+    val lowOrder5Bits = additionalInfo.value.toInt()
+    return (highOrder3Bits or lowOrder5Bits).toByte()
 }
