@@ -1,3 +1,4 @@
+@file:JvmName("Encoder")
 package io.github.routis.cbor
 
 import io.github.routis.cbor.internal.writeDataItem
