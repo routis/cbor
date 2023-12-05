@@ -37,8 +37,8 @@ internal fun Source.readDataItem(): DataItem {
 private fun Source.readDataItemOrBreak(): DataItemOrBreak {
 
     val initialByte = readUByte()
-    val majorType = MajorType(initialByte)
-    val additionalInfo = AdditionalInfo(initialByte)
+    val majorType = MajorType.fromInitialByte(initialByte)
+    val additionalInfo = AdditionalInfo.fromInitialByte(initialByte)
 
     fun readSizeThen(block: (Size) -> DataItem): DataItem =
         readSize(additionalInfo).let(block)
@@ -133,25 +133,27 @@ private fun Source.readTagged(additionalInfo: AdditionalInfo): DataItem.Tagged<*
     }
 }
 
-private fun Source.readMajorSeven(additionalInfo: AdditionalInfo): DataItemOrBreak =
-    when (additionalInfo.value.toInt()) {
-        in 0..19 -> DataItem.Unassigned(additionalInfo.value).orBreak()
-        20 -> DataItem.Bool(false).orBreak()
-        21 -> DataItem.Bool(true).orBreak()
-        22 -> DataItem.Null.orBreak()
-        23 -> DataItem.Undefined.orBreak()
-        24 -> when (val next = readUByte()) {
+private fun Source.readMajorSeven(additionalInfo: AdditionalInfo): DataItemOrBreak {
+
+
+    return when (additionalInfo.value) {
+        in 0u..19u -> DataItem.Unassigned(additionalInfo.value).orBreak()
+        AdditionalInfo.BOOLEAN_FALSE -> DataItem.Bool(false).orBreak()
+        AdditionalInfo.BOOLEAN_TRUE -> DataItem.Bool(true).orBreak()
+        AdditionalInfo.NULL -> DataItem.Null.orBreak()
+        AdditionalInfo.UNDEFINED -> DataItem.Undefined.orBreak()
+        AdditionalInfo.RESERVED_OR_UNASSIGNED -> when (val next = readUByte()) {
             in 0.toUByte()..31.toUByte() -> DataItem.Reserved(next)
             else -> DataItem.Unassigned(next)
         }.orBreak()
-
-        25 -> DataItem.HalfPrecisionFloat(floatFromHalfBits(readShort())).orBreak()
-        26 -> DataItem.SinglePrecisionFloat(Float.fromBits(readInt())).orBreak()
-        27 -> DataItem.DoublePrecisionFloat(Double.fromBits(readLong())).orBreak()
-        in 28..30 -> DataItem.Unassigned(additionalInfo.value).orBreak()
-        31 -> DataItemOrBreak.Break
+        AdditionalInfo.HALF_PRECISION_FLOAT -> DataItem.HalfPrecisionFloat(floatFromHalfBits(readShort())).orBreak()
+        AdditionalInfo.SINGLE_PRECISION_FLOAT -> DataItem.SinglePrecisionFloat(Float.fromBits(readInt())).orBreak()
+        AdditionalInfo.DOUBLE_PRECISION_FLOAT -> DataItem.DoublePrecisionFloat(Double.fromBits(readLong())).orBreak()
+        in 28u..30u -> DataItem.Unassigned(additionalInfo.value).orBreak()
+        AdditionalInfo.BREAK -> DataItemOrBreak.Break
         else -> error("Not supported")
     }
+}
 
 /**
  * Reads the next [DataItem] until it finds a break.
@@ -179,11 +181,11 @@ private sealed interface Size {
 }
 
 
-private const val indefiniteLengthIndicator: UByte = 31u
-
 private fun Source.readSize(additionalInfo: AdditionalInfo): Size =
-    if (additionalInfo.value == indefiniteLengthIndicator) Size.Indefinite
-    else Size.Definite(readUnsignedInt(additionalInfo))
+    when (additionalInfo.value) {
+        AdditionalInfo.INDEFINITE_LENGTH_INDICATOR -> Size.Indefinite
+        else -> Size.Definite(readUnsignedInt(additionalInfo))
+    }
 
 
 /**
@@ -198,12 +200,12 @@ private fun Source.readSize(additionalInfo: AdditionalInfo): Size =
  */
 private fun Source.readUnsignedInt(additionalInfo: AdditionalInfo): ULong {
 
-    return when (additionalInfo.value.toInt()) {
-        in 0..<24 -> additionalInfo.value.toULong()
-        24 -> readUByte().toULong()
-        25 -> readUShort().toULong()
-        26 -> readUInt().toULong()
-        27 -> readULong()
+    return when (additionalInfo.value) {
+        in AdditionalInfo.ZeroToTwentyThree -> additionalInfo.value.toULong()
+        AdditionalInfo.SINGLE_BYTE_UINT -> readUByte().toULong()
+        AdditionalInfo.DOUBLE_BYTE_UINT -> readUShort().toULong()
+        AdditionalInfo.FOUR_BYTE_UINT -> readUInt().toULong()
+        AdditionalInfo.EIGHT_BYTE_UINT -> readULong()
         else -> error("Cannot use ${additionalInfo.value} for reading unsigned. Valid values are in 0..27 inclusive")
     }.toULong()
 }
