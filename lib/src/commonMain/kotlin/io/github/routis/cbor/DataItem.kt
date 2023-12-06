@@ -40,7 +40,6 @@ sealed interface DataItem {
         override fun hashCode(): Int {
             return bytes.contentHashCode()
         }
-
     }
 
     /**

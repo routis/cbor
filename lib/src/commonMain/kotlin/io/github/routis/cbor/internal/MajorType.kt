@@ -54,8 +54,8 @@ internal class AdditionalInfo(val value: UByte) : Comparable<AdditionalInfo> {
 
     override fun compareTo(other: AdditionalInfo): Int = this.value.compareTo(other.value)
 
-
     override fun toString(): String = "AdditionalInfo(value=$value)"
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || this::class != other::class) return false

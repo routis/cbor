@@ -5,7 +5,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class DecodeTests {
-
     @Test
     fun major_0_single_byte() {
         for (i in 0..23) {
