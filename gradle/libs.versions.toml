@@ -5,6 +5,7 @@ kotlinxKover = "0.7.5"
 kotlinxIo = "0.3.0"
 junit5 = "5.10.1"
 okio = "3.6.0"
+ktlint = "12.0.2"
 
 [libraries]
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIo" }
@@ -15,6 +16,5 @@ junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.r
 okio = { group = "com.squareup.okio", name = "okio", version.ref = "okio" }
 
 [plugins]
-kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlinxKover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kotlinxKover" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }

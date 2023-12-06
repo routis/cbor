@@ -10,14 +10,12 @@ import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.assertDoesNotThrow
 import kotlin.test.assertEquals
 
-
 class CborSpecTests {
     @TestFactory
-    fun appendixATests() = readTestVectors().map { decodeTest(it) }
-
+    fun decodeTests() = readTestVectors().map { decodeTest(it) }
 
     @TestFactory
-    fun appendixAEncodeTests() = readTestVectors()
+    fun encodeTests() = readTestVectors()
         .filter { it.roundTrip }
         .map { encodeTest(it) }
 
@@ -25,19 +23,15 @@ class CborSpecTests {
         val dataItem = decode(tv.bytes).also { println(it) }
 
         return dynamicTest("given a cbor \"${dataItem}\", when  encoded, then it should produce ${tv.hex}") {
-
             val bytes = encode(dataItem)
             val expected = tv.hex
             val actual = bytes.toHexString()
             assertEquals(expected, actual)
-
         }
     }
 
     private fun decodeTest(tv: TestVector): DynamicTest {
-
         fun DataItem.assertJsonIs(expected: JsonElement, dataItemJson: JsonElement?) {
-
             when (this) {
                 is DataItem.SinglePrecisionFloat -> assertEquals(
                     expected.jsonPrimitive.floatOrNull,
@@ -56,7 +50,6 @@ class CborSpecTests {
 
                 else -> assertEquals(expected, dataItemJson)
             }
-
         }
 
         return dynamicTest("given a cbor \"${tv.hex}\", when decoding, then it should produce a dataitem  ${tv.decoded ?: tv.diagnostic}}") {
@@ -66,10 +59,6 @@ class CborSpecTests {
 
             val dataItemJson = assertDoesNotThrow("Failed toJson for ${dataItem.javaClass}") { dataItem.toJson() }
             tv.decoded?.let { elem -> dataItem.assertJsonIs(elem, dataItemJson) }
-
         }
     }
-
 }
-
-

@@ -8,10 +8,11 @@ import kotlinx.serialization.json.decodeFromStream
 import okio.FileSystem
 import okio.Path.Companion.toPath
 
-val jsonSupport = Json {
-    prettyPrint = true
-    ignoreUnknownKeys = true
-}
+val jsonSupport =
+    Json {
+        prettyPrint = true
+        ignoreUnknownKeys = true
+    }
 
 // https://github.com/cbor/test-vectors/blob/master/appendix_a.json
 
@@ -21,13 +22,14 @@ data class TestVector(
     val hex: String,
     @SerialName("roundtrip") val roundTrip: Boolean,
     val decoded: JsonElement? = null,
-    val diagnostic: String? = null
+    val diagnostic: String? = null,
 ) {
     val bytes: ByteArray by lazy {
         hex.hexToByteArray(HexFormat.Default)
     }
 }
 
-fun readTestVectors(): List<TestVector> = FileSystem.RESOURCES.read("appendix_a.json".toPath()) {
-    jsonSupport.decodeFromStream<List<TestVector>>(this.inputStream())
-}
+fun readTestVectors(): List<TestVector> =
+    FileSystem.RESOURCES.read("appendix_a.json".toPath()) {
+        jsonSupport.decodeFromStream<List<TestVector>>(this.inputStream())
+    }

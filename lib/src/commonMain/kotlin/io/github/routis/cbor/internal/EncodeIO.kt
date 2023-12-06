@@ -1,37 +1,39 @@
 package io.github.routis.cbor.internal
 
 import io.github.routis.cbor.DataItem
-import kotlinx.io.Sink
-import kotlinx.io.writeDouble
-import kotlinx.io.writeFloat
+import kotlinx.io.*
 
+/**
+ *  @receiver The sink to write to
+ */
+@Throws(IOException::class)
 internal fun Sink.writeDataItem(item: DataItem) {
     when (item) {
-        is DataItem.Integer.Unsigned -> writeInitialByteAndSize(MajorType.Zero, item.value)
-        is DataItem.Integer.Negative -> writeInitialByteAndSize(MajorType.One, item.value)
+        is DataItem.Integer.Unsigned -> writeInitialByteAndUnsignedInteger(MajorType.Zero, item.value)
+        is DataItem.Integer.Negative -> writeInitialByteAndUnsignedInteger(MajorType.One, item.value)
         is DataItem.ByteString -> {
             val bytes = item.bytes
-            val byteCount = item.bytes.size.toULong()
-            writeInitialByteAndSize(MajorType.Two, byteCount)
+            val byteCount = item.bytes.size
+            writeInitialByteAndUnsignedInteger(MajorType.Two, byteCount.toULong())
             write(bytes)
         }
 
         is DataItem.TextString -> {
             val bytes = item.text.encodeToByteArray()
-            val byteCount = bytes.size.toULong()
-            writeInitialByteAndSize(MajorType.Three, byteCount)
+            val byteCount = bytes.size
+            writeInitialByteAndUnsignedInteger(MajorType.Three, byteCount.toULong())
             write(bytes)
         }
 
         is DataItem.Array -> {
-            val elementsNo = item.size.toULong()
-            writeInitialByteAndSize(MajorType.Four, elementsNo)
-            item.forEach { writeDataItem(it) }
+            val elementsNo = item.size
+            writeInitialByteAndUnsignedInteger(MajorType.Four, elementsNo.toULong())
+            item.forEach { element -> writeDataItem(element) }
         }
 
         is DataItem.CborMap -> {
-            val keyValuePairsNo = item.size.toULong()
-            writeInitialByteAndSize(MajorType.Five, keyValuePairsNo)
+            val entriesNo = item.size
+            writeInitialByteAndUnsignedInteger(MajorType.Five, entriesNo.toULong())
             item.forEach { (key, value) ->
                 writeDataItem(key.item)
                 writeDataItem(value)
@@ -40,74 +42,79 @@ internal fun Sink.writeDataItem(item: DataItem) {
 
         is DataItem.Tagged<*> -> {
             val tagValue = item.tagValue()
-            writeInitialByteAndSize(MajorType.Six, tagValue)
+            writeInitialByteAndUnsignedInteger(MajorType.Six, tagValue)
             writeDataItem(item.content)
         }
 
-        is DataItem.Bool ->
-            if (!item.value) writeInitialByte(MajorType.Seven, AdditionalInfo(20u))
-            else writeInitialByte(MajorType.Seven, AdditionalInfo(21u))
+        is DataItem.Bool -> {
+            if (item.value) {
+                writeMajorSevenInitialByte(AdditionalInfo.BOOLEAN_TRUE)
+            } else {
+                writeMajorSevenInitialByte(AdditionalInfo.BOOLEAN_FALSE)
+            }
+        }
 
-        DataItem.Null -> writeInitialByte(MajorType.Seven, AdditionalInfo(22u))
-        DataItem.Undefined -> writeInitialByte(MajorType.Seven, AdditionalInfo(23u))
+        DataItem.Null -> writeMajorSevenInitialByte(AdditionalInfo.NULL)
+        DataItem.Undefined -> writeMajorSevenInitialByte(AdditionalInfo.UNDEFINED)
         is DataItem.Reserved -> {
-            writeInitialByte(MajorType.Seven, AdditionalInfo(24u))
-            writeByte(item.value.toByte())
+            writeMajorSevenInitialByte(AdditionalInfo.RESERVED_OR_UNASSIGNED)
+            writeUByte(item.value)
         }
 
         is DataItem.HalfPrecisionFloat -> {
-            writeInitialByte(MajorType.Seven, AdditionalInfo(25u))
-            writeShort(fromFullPrecision(item.value))
+            writeMajorSevenInitialByte(AdditionalInfo.HALF_PRECISION_FLOAT)
+            writeShort(halfBitsFromFloat(item.value))
         }
+
         is DataItem.SinglePrecisionFloat -> {
-            writeInitialByte(MajorType.Seven, AdditionalInfo(26u))
+            writeMajorSevenInitialByte(AdditionalInfo.SINGLE_PRECISION_FLOAT)
             writeFloat(item.value)
         }
 
         is DataItem.DoublePrecisionFloat -> {
-            writeInitialByte(MajorType.Seven, AdditionalInfo(27u))
+            writeMajorSevenInitialByte(AdditionalInfo.DOUBLE_PRECISION_FLOAT)
             writeDouble(item.value)
         }
 
-
         is DataItem.Unassigned -> {
-
-            val (additionalInfo, next) = when (item.value) {
-                in 0u..19u -> AdditionalInfo(item.value) to null
-                in 28u..30u -> AdditionalInfo(item.value) to null
-                else -> AdditionalInfo(24u) to item.value.toByte()
-
-            }
-            writeInitialByte(MajorType.Seven, additionalInfo)
+            val (additionalInfo, next) =
+                when (item.value) {
+                    in 0u..19u -> item.value to null
+                    in 28u..30u -> item.value to null
+                    else -> AdditionalInfo.RESERVED_OR_UNASSIGNED to item.value.toByte()
+                }
+            writeMajorSevenInitialByte(additionalInfo)
             next?.let { writeByte(it) }
         }
     }
 }
 
-private fun Sink.writeInitialByteAndSize(majorType: MajorType, size: ULong) {
-    val additionalInfo = when (size) {
-        in 0uL..<24uL -> AdditionalInfo(size.toUByte())
-        in 24uL..UByte.MAX_VALUE.toULong() -> AdditionalInfo(24u)
-        in (UByte.MAX_VALUE + 1u).toULong()..UShort.MAX_VALUE.toULong() -> AdditionalInfo(25u)
-        in (UShort.MAX_VALUE + 1u).toULong()..UInt.MAX_VALUE.toULong() -> AdditionalInfo(26u)
-        in (UInt.MAX_VALUE + 1u).toULong()..ULong.MAX_VALUE -> AdditionalInfo(27u)
-        else -> error("Invalid value")
-    }
-    writeInitialByte(majorType, additionalInfo)
-    when (additionalInfo.value.toInt()) {
-        in 0..23 -> Unit
-        24 -> writeByte(size.toUByte().toByte())
-        25 -> writeShort(size.toUShort().toShort())
-        26 -> writeInt(size.toUInt().toInt())
-        27 -> writeLong(size.toLong())
+/**
+ * Calculates the closest [AdditionalInfo] of the given [value], then writes to the [Sink] the
+ * initial byte followed, if needed, by an 1, 2, 4 or 8 byte long value
+ *
+ * @receiver The sink to write to
+ */
+private fun Sink.writeInitialByteAndUnsignedInteger(
+    majorType: MajorType,
+    value: ULong,
+) {
+    require(majorType != MajorType.Seven) { "Not applicable for Major type 7" }
+    require(value >= 0u)
+    val additionalInfo = AdditionalInfo.forUnsignedInt(value)
+    val initialByte = initialByte(majorType, additionalInfo)
+    writeByte(initialByte.toByte())
+    when (additionalInfo.value) {
+        in AdditionalInfo.ZeroToTwentyThreeRange -> Unit // Do nothing. Value is included in initial byte
+        AdditionalInfo.SINGLE_BYTE_UINT -> writeUByte(value.toUByte())
+        AdditionalInfo.DOUBLE_BYTE_UINT -> writeUShort(value.toUShort())
+        AdditionalInfo.FOUR_BYTE_UINT -> writeUInt(value.toUInt())
+        AdditionalInfo.EIGHT_BYTE_UINT -> writeULong(value)
         else -> error("Oops")
     }
 }
 
-private fun Sink.writeInitialByte(majorType: MajorType, additionalInfo: AdditionalInfo) {
-    val initialByte = initialByte(majorType, additionalInfo)
-    writeByte(initialByte)
+private fun Sink.writeMajorSevenInitialByte(additionalInfo: UByte) {
+    val initialByte = initialByte(MajorType.Seven, AdditionalInfo(additionalInfo))
+    writeByte(initialByte.toByte())
 }
-
-
-
