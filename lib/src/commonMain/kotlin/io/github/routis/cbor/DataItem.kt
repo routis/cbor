@@ -1,7 +1,5 @@
 package io.github.routis.cbor
 
-import kotlinx.io.*
-
 sealed interface DataItem {
 
     /**
@@ -56,13 +54,13 @@ sealed interface DataItem {
      * An array of data [items].
      * Items in an array do not need to all be of the same type
      */
-     data class Array(private val items: List<DataItem>) : DataItem, List<DataItem> by items
+    data class Array(private val items: List<DataItem>) : DataItem, List<DataItem> by items
 
     /**
      * A map (set of key value pairs)
      * Not all [DataItem] can be used as keys. Check [Key]
      */
-     data class CborMap(private val items: Map<Key<*>, DataItem>) : DataItem, Map<Key<*>, DataItem> by items
+    data class CborMap(private val items: Map<Key<*>, DataItem>) : DataItem, Map<Key<*>, DataItem> by items
 
     /**
      * A tagged [DataItem]
@@ -81,8 +79,11 @@ sealed interface DataItem {
             data class Unsigned(override val content: Integer.Unsigned) : EpochBasedDateTime<Integer.Unsigned>
             data class Negative(override val content: Integer.Negative) : EpochBasedDateTime<Integer.Negative>
             data class HalfFloat(override val content: HalfPrecisionFloat) : EpochBasedDateTime<HalfPrecisionFloat>
-            data class SingleFloat(override val content: SinglePrecisionFloat) : EpochBasedDateTime<SinglePrecisionFloat>
-            data class DoubleFloat(override val content: DoublePrecisionFloat) : EpochBasedDateTime<DoublePrecisionFloat>
+            data class SingleFloat(override val content: SinglePrecisionFloat) :
+                EpochBasedDateTime<SinglePrecisionFloat>
+
+            data class DoubleFloat(override val content: DoublePrecisionFloat) :
+                EpochBasedDateTime<DoublePrecisionFloat>
         }
 
         data class BigNumUnsigned(override val content: ByteString) : Tagged<ByteString>
