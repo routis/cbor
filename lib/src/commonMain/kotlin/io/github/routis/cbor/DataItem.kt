@@ -16,8 +16,6 @@ sealed interface DataItem {
             init {
                 require(value >= 0uL) { "Value should be in range 0..2^64-1" }
             }
-
-            fun negate(): Negative = unaryMinus()
         }
 
         /**
@@ -26,34 +24,6 @@ sealed interface DataItem {
         data class Negative(val value: ULong) : Integer {
             init {
                 require(value >= 0uL) { "Value should be in range 0..2^64-1" }
-            }
-        }
-
-        companion object {
-
-            /**
-             * Creates a [DataItem.Integer]
-             *
-             * @param isZeroOrMore indicates whether the [DataItem.Integer] would be
-             * [positive][DataItem.Integer.Unsigned] or [negative][DataItem.Integer.Negative]
-             * @param bytes an array of 1, 2, 4, or 8 bytes representing [UByte], [UShort], [UInt]
-             * or [ULong] respectively
-             * @return the [DataItem.Integer] representing the given value
-             * @throws IllegalArgumentException in case the [bytes] represent
-             * a number outside the range 0..2^64-1 inclusive
-             */
-            internal fun integerFrom(isZeroOrMore: Boolean, bytes: ByteArray) : Integer {
-                val value = Buffer().use { buffer ->
-                    buffer.write(bytes)
-                    when (bytes.size) {
-                        1 -> buffer.readUByte().toULong()
-                        2 -> buffer.readUShort().toULong()
-                        4 -> buffer.readUInt().toULong()
-                        8 -> buffer.readULong()
-                        else -> error("Array should contain 1, 2, 4 or 8 bytes")
-                    }
-                }
-                return if (isZeroOrMore) Unsigned(value) else Negative(value)
             }
         }
 
@@ -162,7 +132,7 @@ sealed interface DataItem {
 
 }
 
-expect operator fun DataItem.Integer.Unsigned.unaryMinus(): DataItem.Integer.Negative
+
 expect fun DataItem.Integer.Unsigned.asNumber(): Number
 expect fun DataItem.Integer.Negative.asNumber(): Number
 expect fun DataItem.Tagged.BigNumUnsigned.asNumber(): Number

@@ -45,7 +45,7 @@ private fun Source.readDataItemOrBreak(): DataItemOrBreak {
 
     return when (majorType) {
         MajorType.Zero -> readUnsignedInteger(additionalInfo).orBreak()
-        MajorType.One -> readUnsignedInteger(additionalInfo).negate().orBreak()
+        MajorType.One -> readNegativeInteger(additionalInfo).orBreak()
         MajorType.Two -> readSizeThen(::readByteString).orBreak()
         MajorType.Three -> readSizeThen(::readTextString).orBreak()
         MajorType.Four -> readSizeThen(::readArray).orBreak()
@@ -58,6 +58,11 @@ private fun Source.readDataItemOrBreak(): DataItemOrBreak {
 private fun Source.readUnsignedInteger(additionalInfo: AdditionalInfo): DataItem.Integer.Unsigned {
     val value = readUnsignedInt(additionalInfo)
     return DataItem.Integer.Unsigned(value)
+}
+
+private fun Source.readNegativeInteger(additionalInfo: AdditionalInfo): DataItem.Integer.Negative {
+    val value = readUnsignedInt(additionalInfo)
+    return DataItem.Integer.Negative(value)
 }
 
 
@@ -146,6 +151,7 @@ private fun Source.readMajorSeven(additionalInfo: AdditionalInfo): DataItemOrBre
             in 0.toUByte()..31.toUByte() -> DataItem.Reserved(next)
             else -> DataItem.Unassigned(next)
         }.orBreak()
+
         AdditionalInfo.HALF_PRECISION_FLOAT -> DataItem.HalfPrecisionFloat(floatFromHalfBits(readShort())).orBreak()
         AdditionalInfo.SINGLE_PRECISION_FLOAT -> DataItem.SinglePrecisionFloat(Float.fromBits(readInt())).orBreak()
         AdditionalInfo.DOUBLE_PRECISION_FLOAT -> DataItem.DoublePrecisionFloat(Double.fromBits(readLong())).orBreak()
@@ -207,13 +213,5 @@ private fun Source.readUnsignedInt(additionalInfo: AdditionalInfo): ULong {
         AdditionalInfo.FOUR_BYTE_UINT -> readUInt().toULong()
         AdditionalInfo.EIGHT_BYTE_UINT -> readULong()
         else -> error("Cannot use ${additionalInfo.value} for reading unsigned. Valid values are in 0..27 inclusive")
-    }.toULong()
+    }
 }
-
-private fun Source.readUByte(): UByte = readByte().toUByte()
-
-private fun Source.readUShort(): UShort = readShort().toUShort()
-
-private fun Source.readUInt(): UInt = readInt().toUInt()
-
-private fun Source.readULong(): ULong = readLong().toULong()

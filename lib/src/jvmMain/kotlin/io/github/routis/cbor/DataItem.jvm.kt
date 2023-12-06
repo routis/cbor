@@ -2,8 +2,6 @@ package io.github.routis.cbor
 
 import java.math.BigInteger
 
-actual operator fun DataItem.Integer.Unsigned.unaryMinus(): DataItem.Integer.Negative =
-    DataItem.Integer.Negative(value)
 
 actual fun DataItem.Integer.Unsigned.asNumber(): Number = BigInteger(value.toString())
 actual fun DataItem.Integer.Negative.asNumber(): Number = BigInteger(value.toString()).asNegative()
