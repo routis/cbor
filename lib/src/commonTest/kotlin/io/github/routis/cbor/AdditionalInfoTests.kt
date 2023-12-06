@@ -1,12 +1,12 @@
 package io.github.routis.cbor
 
 import io.github.routis.cbor.internal.AdditionalInfo
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class AdditionalInfoTests {
     @Test
-    fun `additionalInfoForUnsignedInt for number 0 to 23 UByte`() {
+    fun additionalInfoForUnsignedInt_for_number_0_to_23_UByte() {
         val start: UByte = 0u
         val end: UByte = 23u
         (start..end).forEach {
@@ -15,7 +15,7 @@ class AdditionalInfoTests {
     }
 
     @Test
-    fun `additionalInfoForUnsignedInt for number 24 to 255 UByte`() {
+    fun additionalInfoForUnsignedInt_for_number_24_to_2255_UByte() {
         val start: UByte = 24u
         val end: UByte = 255u
         (start..end).forEach {
@@ -24,7 +24,7 @@ class AdditionalInfoTests {
     }
 
     @Test
-    fun `additionalInfoForUnsignedInt for number 0 to 23 UShort`() {
+    fun additionalInfoForUnsignedInt_for_number_0_to_23_UShort() {
         val start: UShort = 0u
         val end: UShort = 23u
         (start..end).forEach {
@@ -33,7 +33,7 @@ class AdditionalInfoTests {
     }
 
     @Test
-    fun `additionalInfoForUnsignedInt for number 24 to 255 UShort`() {
+    fun additionalInfoForUnsignedInt_for_number_24_to_2255_UShort() {
         val start: UShort = 24u
         val end: UShort = 255u
         (start..end).forEach {
@@ -42,7 +42,7 @@ class AdditionalInfoTests {
     }
 
     @Test
-    fun `additionalInfoForUnsignedInt for number 256 to 65535 UShort`() {
+    fun additionalInfoForUnsignedInt_for_number_2256_to_65535_UByte() {
         val start: UShort = 256u
         val end: UShort = 65535u
         (start..end).forEach {
@@ -51,34 +51,34 @@ class AdditionalInfoTests {
     }
 
     @Test
-    fun `additionalInfoForUnsignedInt for number 0 to 23 UInt`() {
-        val start: UInt = 0u
-        val end: UInt = 23u
+    fun additionalInfoForUnsignedInt_for_number_0_to_23_UInt() {
+        val start = 0u
+        val end = 23u
         (start..end).forEach {
             assertEquals(AdditionalInfo(it.toUByte()), AdditionalInfo.forUnsignedInt(it.toULong()))
         }
     }
 
     @Test
-    fun `additionalInfoForUnsignedInt for number 24 to 255 UInt`() {
-        val start: UInt = 24u
-        val end: UInt = 255u
+    fun additionalInfoForUnsignedInt_for_number_24_to_2255_UInt() {
+        val start = 24u
+        val end = 255u
         (start..end).forEach {
             assertEquals(AdditionalInfo(AdditionalInfo.SINGLE_BYTE_UINT), AdditionalInfo.forUnsignedInt(it.toULong()))
         }
     }
 
     @Test
-    fun `additionalInfoForUnsignedInt for number 256 to 65535 UInt`() {
-        val start: UInt = 256u
-        val end: UInt = 65535u
+    fun additionalInfoForUnsignedInt_for_number_2256_to_65535_UInt() {
+        val start = 256u
+        val end = 65535u
         (start..end).forEach {
             assertEquals(AdditionalInfo(AdditionalInfo.DOUBLE_BYTE_UINT), AdditionalInfo.forUnsignedInt(it.toULong()))
         }
     }
 
     @Test
-    fun `additionalInfoForUnsignedInt for number 0 to 23 ULong`() {
+    fun additionalInfoForUnsignedInt_for_number_0_to_23_ULong() {
         val start: ULong = 0u
         val end: ULong = 23u
         (start..end).forEach {
@@ -87,7 +87,7 @@ class AdditionalInfoTests {
     }
 
     @Test
-    fun `additionalInfoForUnsignedInt for number 24 to 255 ULong`() {
+    fun additionalInfoForUnsignedInt_for_number_24_to_2255_ULong() {
         val start: ULong = 24u
         val end: ULong = 255u
         (start..end).forEach {
@@ -96,11 +96,11 @@ class AdditionalInfoTests {
     }
 
     @Test
-    fun `additionalInfoForUnsignedInt for number 256 to 65535 ULong`() {
+    fun additionalInfoForUnsignedInt_for_number_2256_to_65535_ULong() {
         val start: ULong = 256u
         val end: ULong = 65535u
         (start..end).forEach {
-            assertEquals(AdditionalInfo(AdditionalInfo.DOUBLE_BYTE_UINT), AdditionalInfo.forUnsignedInt(it.toULong()))
+            assertEquals(AdditionalInfo(AdditionalInfo.DOUBLE_BYTE_UINT), AdditionalInfo.forUnsignedInt(it))
         }
     }
 }

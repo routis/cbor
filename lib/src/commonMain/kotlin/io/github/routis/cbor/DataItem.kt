@@ -30,7 +30,7 @@ sealed interface DataItem {
     data class ByteString(val bytes: ByteArray) : DataItem {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
-            if (javaClass != other?.javaClass) return false
+            if (other == null || this::class != other::class) return false
 
             other as ByteString
 
@@ -140,8 +140,6 @@ sealed interface DataItem {
 
     data class Reserved(val value: UByte) : DataItem
 }
-
-expect fun DataItem.Integer.Unsigned.asNumber(): Number
 
 expect fun DataItem.Integer.Negative.asNumber(): Number
 

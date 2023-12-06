@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 
 class DecodeTests {
     @Test
-    fun `Major 0 single byte`() {
+    fun major_0_single_byte() {
         for (i in 0..23) {
             val expected = DataItem.Integer.Unsigned(i.toULong())
             val decoded = decode(byteArrayOf(i.toByte()))
@@ -15,14 +15,14 @@ class DecodeTests {
     }
 
     @Test
-    fun `Major 0 0b000_01010 is uint 10`() {
+    fun major_0_0b000_01010_is_uint_10() {
         val bytes = byteArrayOf(0b000_01010.toByte())
         val decoded = decode(bytes)
         assertEquals(DataItem.Integer.Unsigned(10uL), decoded)
     }
 
     @Test
-    fun `0b000_11001 followed by 0x01F4 is uint 500`() {
+    fun value_0b000_11001_followed_by_0x01F4_is_uint_500() {
         val bytes =
             byteArrayOf(
                 0b000_11001.toByte(),
@@ -34,7 +34,7 @@ class DecodeTests {
     }
 
     @Test
-    fun `-500 should be represented as Major 1 with 499`() {
+    fun value_minus_500_should_be_represented_as_Major_1_499() {
         val value499 = 499uL
         0b001_11001.toHexString().also { println(it) }
         val bytes =
@@ -48,21 +48,21 @@ class DecodeTests {
     }
 
     @Test
-    fun `vp_token should be decoded`() {
+    fun vp_token_should_be_decoded() {
         decodeBase64UrlSafe(vpToken).also { cbor ->
             cbor.toJson().also { println(jsonSupport.encodeToString(it)) }
         }
     }
 
     @Test
-    fun `Sample msoMdoc should be decoded`() {
+    fun sample_msoMdoc_should_be_decoded() {
         decodeBase64UrlSafe(sampleMsoMdoc).also { cbor ->
             cbor.toJson().also { println(jsonSupport.encodeToString(it)) }
         }
     }
 
     @Test
-    fun `other should be decoded`() {
+    fun other_should_be_decoded() {
         decode(otherHex.hexToByteArray(format = HexFormat { upperCase = true })).also { cbor ->
             cbor.toJson().also { println(jsonSupport.encodeToString(it)) }
         }

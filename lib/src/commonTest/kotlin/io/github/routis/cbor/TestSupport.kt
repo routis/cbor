@@ -4,9 +4,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.decodeFromStream
-import okio.FileSystem
-import okio.Path.Companion.toPath
 
 val jsonSupport =
     Json {
@@ -28,8 +25,3 @@ data class TestVector(
         hex.hexToByteArray(HexFormat.Default)
     }
 }
-
-fun readTestVectors(): List<TestVector> =
-    FileSystem.RESOURCES.read("appendix_a.json".toPath()) {
-        jsonSupport.decodeFromStream<List<TestVector>>(this.inputStream())
-    }

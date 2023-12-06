@@ -54,16 +54,20 @@ internal class AdditionalInfo(val value: UByte) : Comparable<AdditionalInfo> {
 
     override fun compareTo(other: AdditionalInfo): Int = this.value.compareTo(other.value)
 
+    override fun toString(): String = "AdditionalInfo(value=$value)"
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+        if (other == null || this::class != other::class) return false
+
         other as AdditionalInfo
+
         return value == other.value
     }
 
-    override fun hashCode(): Int = value.hashCode()
-
-    override fun toString(): String = "AdditionalInfo(value=$value)"
+    override fun hashCode(): Int {
+        return value.hashCode()
+    }
 
     companion object {
         private const val ZERO: UByte = 0u

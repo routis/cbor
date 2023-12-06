@@ -1,5 +1,7 @@
 package io.github.routis.cbor
 
+import kotlin.jvm.JvmStatic
+
 /**
  * [Data items][DataItem] that can be used as keys in a [CBOR map][DataItem.CborMap]
  * @param DI The type of the data item
