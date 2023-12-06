@@ -10,7 +10,7 @@ sealed interface Key<out DI : DataItem> {
      */
     val item: DI
 
-   data class BoolKey(override val item: DataItem.Bool) : Key<DataItem.Bool>
+    data class BoolKey(override val item: DataItem.Bool) : Key<DataItem.Bool>
 
     data class ByteStringKey(override val item: DataItem.ByteString) : Key<DataItem.ByteString>
 
@@ -19,22 +19,19 @@ sealed interface Key<out DI : DataItem> {
     data class TextStringKey(override val item: DataItem.TextString) : Key<DataItem.TextString>
 
     companion object {
-
         /**
          * Creates a [Key] for the given [dataItem]
          * In case the [dataItem] cannot be used as a kay a `null` is being returned.
          */
         @JvmStatic
         operator fun invoke(dataItem: DataItem): Key<DataItem>? =
-                when (dataItem) {
-                    is DataItem.Bool -> BoolKey(dataItem)
-                    is DataItem.ByteString -> ByteStringKey(dataItem)
-                    is DataItem.Integer.Unsigned -> IntegerKey(dataItem)
-                    is DataItem.Integer.Negative -> IntegerKey(dataItem)
-                    is DataItem.TextString -> TextStringKey(dataItem)
-                    else -> null
-                }
-
+            when (dataItem) {
+                is DataItem.Bool -> BoolKey(dataItem)
+                is DataItem.ByteString -> ByteStringKey(dataItem)
+                is DataItem.Integer.Unsigned -> IntegerKey(dataItem)
+                is DataItem.Integer.Negative -> IntegerKey(dataItem)
+                is DataItem.TextString -> TextStringKey(dataItem)
+                else -> null
+            }
     }
 }
-

@@ -1,10 +1,7 @@
 package io.github.routis.cbor.internal
 
 import io.github.routis.cbor.DataItem
-import kotlinx.io.IOException
-import kotlinx.io.Sink
-import kotlinx.io.writeDouble
-import kotlinx.io.writeFloat
+import kotlinx.io.*
 
 /**
  *  @receiver The sink to write to
@@ -50,15 +47,18 @@ internal fun Sink.writeDataItem(item: DataItem) {
         }
 
         is DataItem.Bool -> {
-            if (item.value) writeMajorSevenInitialByte(AdditionalInfo.BOOLEAN_TRUE)
-            else writeMajorSevenInitialByte(AdditionalInfo.BOOLEAN_FALSE)
+            if (item.value) {
+                writeMajorSevenInitialByte(AdditionalInfo.BOOLEAN_TRUE)
+            } else {
+                writeMajorSevenInitialByte(AdditionalInfo.BOOLEAN_FALSE)
+            }
         }
 
         DataItem.Null -> writeMajorSevenInitialByte(AdditionalInfo.NULL)
         DataItem.Undefined -> writeMajorSevenInitialByte(AdditionalInfo.UNDEFINED)
         is DataItem.Reserved -> {
             writeMajorSevenInitialByte(AdditionalInfo.RESERVED_OR_UNASSIGNED)
-            writeByte(item.value.toByte())
+            writeUByte(item.value)
         }
 
         is DataItem.HalfPrecisionFloat -> {
@@ -77,11 +77,12 @@ internal fun Sink.writeDataItem(item: DataItem) {
         }
 
         is DataItem.Unassigned -> {
-            val (additionalInfo, next) = when (item.value) {
-                in 0u..19u -> item.value to null
-                in 28u..30u -> item.value to null
-                else -> AdditionalInfo.RESERVED_OR_UNASSIGNED to item.value.toByte()
-            }
+            val (additionalInfo, next) =
+                when (item.value) {
+                    in 0u..19u -> item.value to null
+                    in 28u..30u -> item.value to null
+                    else -> AdditionalInfo.RESERVED_OR_UNASSIGNED to item.value.toByte()
+                }
             writeMajorSevenInitialByte(additionalInfo)
             next?.let { writeByte(it) }
         }
@@ -94,18 +95,21 @@ internal fun Sink.writeDataItem(item: DataItem) {
  *
  * @receiver The sink to write to
  */
-private fun Sink.writeInitialByteAndUnsignedInteger(majorType: MajorType, value: ULong) {
+private fun Sink.writeInitialByteAndUnsignedInteger(
+    majorType: MajorType,
+    value: ULong,
+) {
     require(majorType != MajorType.Seven) { "Not applicable for Major type 7" }
     require(value >= 0u)
     val additionalInfo = AdditionalInfo.forUnsignedInt(value)
     val initialByte = initialByte(majorType, additionalInfo)
     writeByte(initialByte.toByte())
     when (additionalInfo.value) {
-        in AdditionalInfo.ZeroToTwentyThree -> Unit // Do nothing. Value is included in initial byte
-        AdditionalInfo.SINGLE_BYTE_UINT -> writeByte(value.toUByte().toByte())
-        AdditionalInfo.DOUBLE_BYTE_UINT -> writeShort(value.toUShort().toShort())
-        AdditionalInfo.FOUR_BYTE_UINT -> writeInt(value.toUInt().toInt())
-        AdditionalInfo.EIGHT_BYTE_UINT -> writeLong(value.toLong())
+        in AdditionalInfo.ZeroToTwentyThreeRange -> Unit // Do nothing. Value is included in initial byte
+        AdditionalInfo.SINGLE_BYTE_UINT -> writeUByte(value.toUByte())
+        AdditionalInfo.DOUBLE_BYTE_UINT -> writeUShort(value.toUShort())
+        AdditionalInfo.FOUR_BYTE_UINT -> writeUInt(value.toUInt())
+        AdditionalInfo.EIGHT_BYTE_UINT -> writeULong(value)
         else -> error("Oops")
     }
 }

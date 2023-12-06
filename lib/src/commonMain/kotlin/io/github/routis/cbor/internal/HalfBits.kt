@@ -1,6 +1,5 @@
 package io.github.routis.cbor.internal
 
-
 private const val HALF_PRECISION_EXPONENT_BIAS = 15
 private const val HALF_PRECISION_MAX_EXPONENT = 0x1f
 private const val HALF_PRECISION_MAX_MANTISSA = 0x3ff
@@ -56,27 +55,36 @@ internal fun floatFromHalfBits(bits: Short): Float {
     return if (negative) -res else res
 }
 
-
 // https://stackoverflow.com/questions/6162651/half-precision-floating-point-in-java
 internal fun halfBitsFromFloat(number: Float): Short {
     val bits = number.toRawBits()
     val sign = bits ushr 16 and 0x8000
     val value = (bits and 0x7fffffff) + 0x1000
-    val result = when {
-        value >= 0x47800000 -> {
-            if (bits and 0x7fffffff >= 0x47800000) {
-                if (value < 0x7f800000) sign or 0x7c00
-                else sign or 0x7c00 or (bits and 0x007fffff ushr 13)
-            } else sign or 0x7bff
+    val result =
+        when {
+            value >= 0x47800000 -> {
+                if (bits and 0x7fffffff >= 0x47800000) {
+                    if (value < 0x7f800000) {
+                        sign or 0x7c00
+                    } else {
+                        sign or 0x7c00 or (bits and 0x007fffff ushr 13)
+                    }
+                } else {
+                    sign or 0x7bff
+                }
+            }
+            value >= 0x38800000 -> sign or (value - 0x38000000 ushr 13)
+            value < 0x33000000 -> sign
+            else -> {
+                val otherValue = bits and 0x7fffffff ushr 23
+                sign or (
+                    (
+                        (bits and 0x7fffff or 0x800000) +
+                            (0x800000 ushr otherValue - 102)
+                    ) ushr 126 - otherValue
+                )
+            }
         }
-        value >= 0x38800000 -> sign or (value - 0x38000000 ushr 13)
-        value < 0x33000000 -> sign
-        else -> {
-            val otherValue = bits and 0x7fffffff ushr 23
-            sign or (((bits and 0x7fffff or 0x800000)
-                    + (0x800000 ushr otherValue - 102)) ushr 126 - otherValue)
-        }
-    }
 
     return result.toShort()
 }

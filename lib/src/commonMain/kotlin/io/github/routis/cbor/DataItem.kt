@@ -1,12 +1,10 @@
 package io.github.routis.cbor
 
 sealed interface DataItem {
-
     /**
      * Integer numbers in the range -2^64..2^64-1 inclusive
      */
     sealed interface Integer : DataItem {
-
         /**
          * Unsigned integer in the range 0..2^64-1 inclusive
          */
@@ -24,7 +22,6 @@ sealed interface DataItem {
                 require(value >= 0uL) { "Value should be in range 0..2^64-1" }
             }
         }
-
     }
 
     /**
@@ -75,10 +72,14 @@ sealed interface DataItem {
          * representing the point in time described there.
          */
         data class StandardDateTimeString(override val content: TextString) : Tagged<TextString>
+
         sealed interface EpochBasedDateTime<DI : DataItem> : Tagged<DI> {
             data class Unsigned(override val content: Integer.Unsigned) : EpochBasedDateTime<Integer.Unsigned>
+
             data class Negative(override val content: Integer.Negative) : EpochBasedDateTime<Integer.Negative>
+
             data class HalfFloat(override val content: HalfPrecisionFloat) : EpochBasedDateTime<HalfPrecisionFloat>
+
             data class SingleFloat(override val content: SinglePrecisionFloat) :
                 EpochBasedDateTime<SinglePrecisionFloat>
 
@@ -87,7 +88,9 @@ sealed interface DataItem {
         }
 
         data class BigNumUnsigned(override val content: ByteString) : Tagged<ByteString>
+
         data class BigNumNegative(override val content: ByteString) : Tagged<ByteString>
+
         data class DecimalFraction(val exponent: Integer, val mantissa: Integer) : Tagged<Array> {
             override val content: Array
                 get() = Array(listOf(exponent, mantissa))
@@ -104,16 +107,21 @@ sealed interface DataItem {
 
         sealed interface EncodedText : Tagged<TextString> {
             data class Base64(override val content: TextString) : EncodedText
+
             data class Base64Url(override val content: TextString) : EncodedText
+
             data class Regex(override val content: TextString) : EncodedText
+
             data class Mime(override val content: TextString) : EncodedText
+
             data class Uri(override val content: TextString) : EncodedText
         }
 
         data class CalendarDay(override val content: Integer) : Tagged<Integer>
-        data class CalendarDate(override val content: TextString) : Tagged<TextString>
-        data class Unsupported(val tag: ULong, override val content: DataItem) : Tagged<DataItem>
 
+        data class CalendarDate(override val content: TextString) : Tagged<TextString>
+
+        data class Unsupported(val tag: ULong, override val content: DataItem) : Tagged<DataItem>
     }
 
     data class Bool(val value: Boolean) : DataItem
@@ -125,16 +133,18 @@ sealed interface DataItem {
     data class DoublePrecisionFloat(val value: Double) : DataItem
 
     data object Null : DataItem
+
     data object Undefined : DataItem
 
     data class Unassigned(val value: UByte) : DataItem
 
     data class Reserved(val value: UByte) : DataItem
-
 }
 
-
 expect fun DataItem.Integer.Unsigned.asNumber(): Number
+
 expect fun DataItem.Integer.Negative.asNumber(): Number
+
 expect fun DataItem.Tagged.BigNumUnsigned.asNumber(): Number
+
 expect fun DataItem.Tagged.BigNumNegative.asNumber(): Number
