@@ -1,9 +1,8 @@
 package io.github.routis.cbor
 
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.doubleOrNull
-import kotlinx.serialization.json.floatOrNull
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.*
+import okio.FileSystem
+import okio.Path.Companion.toPath
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.TestFactory
@@ -62,3 +61,9 @@ class CborSpecTests {
         }
     }
 }
+
+fun readTestVectors(): List<TestVector> =
+    FileSystem.RESOURCES.read("appendix_a.json".toPath()) {
+        jsonSupport.decodeFromStream<List<TestVector>>(this.inputStream())
+    }
+

@@ -6,6 +6,7 @@ import io.github.routis.cbor.internal.writeDataItem
 import kotlinx.io.Buffer
 import kotlinx.io.IOException
 import kotlinx.io.readByteArray
+import kotlin.jvm.JvmName
 
 /**
  * Encodes the given [dataItem] into a [ByteArray] according to CBOR

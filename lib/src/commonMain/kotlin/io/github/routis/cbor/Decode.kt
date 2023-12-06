@@ -6,6 +6,7 @@ import io.github.routis.cbor.internal.readDataItem
 import kotlinx.io.Buffer
 import kotlinx.io.IOException
 import kotlin.io.encoding.Base64
+import kotlin.jvm.JvmName
 
 /**
  * Decodes the given [source] into [DataItem]

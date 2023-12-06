@@ -4,6 +4,9 @@ package io.github.routis.cbor
 
 import kotlinx.serialization.json.*
 import kotlin.io.encoding.Base64
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 
 typealias KeyMapper<K> = (K) -> String?
 
