@@ -67,8 +67,24 @@ data class JsonOptions(
     }
 }
 
+interface BigIntSupport<out T> {
+    fun unsignedFrom(hex: String): T
+
+    fun negativeFrom(hex: String): T
+
+    fun unsignedFrom(bytes: ByteArray): T = unsignedFrom(bytes.toHexString())
+
+    fun negativeFrom(bytes: ByteArray): T = negativeFrom(bytes.toHexString())
+
+    fun negativeFrom(value: ULong): T = negativeFrom(value.toHexString())
+}
+
+expect fun bigIntSupport(): BigIntSupport<Number>
+
 @JvmOverloads
 fun DataItem.toJson(options: JsonOptions = JsonOptions.Default): JsonElement {
+    val bigIntSupport = bigIntSupport()
+
     fun keyAsString(k: Key<*>): String? {
         val keyOptions = options.keyOptions
         return when (k) {
@@ -82,7 +98,7 @@ fun DataItem.toJson(options: JsonOptions = JsonOptions.Default): JsonElement {
     fun convert(item: DataItem): JsonElement =
         when (item) {
             is DataItem.Integer.Unsigned -> JsonPrimitive(item.value)
-            is DataItem.Integer.Negative -> JsonPrimitive(item.asNumber())
+            is DataItem.Integer.Negative -> JsonPrimitive(bigIntSupport.negativeFrom(item.value))
             is DataItem.ByteString -> options.byteStringOption(item)
             is DataItem.TextString -> JsonPrimitive(item.text)
             is DataItem.Array -> item.map(::convert).let(::JsonArray)
@@ -99,8 +115,8 @@ fun DataItem.toJson(options: JsonOptions = JsonOptions.Default): JsonElement {
                     is DataItem.Tagged.EpochBasedDateTime.HalfFloat -> convert(item.content)
                     is DataItem.Tagged.EpochBasedDateTime.SingleFloat -> convert(item.content)
                     is DataItem.Tagged.EpochBasedDateTime.DoubleFloat -> convert(item.content)
-                    is DataItem.Tagged.BigNumUnsigned -> JsonPrimitive(item.asNumber())
-                    is DataItem.Tagged.BigNumNegative -> JsonPrimitive(item.asNumber())
+                    is DataItem.Tagged.BigNumUnsigned -> JsonPrimitive(bigIntSupport.unsignedFrom(item.content.bytes))
+                    is DataItem.Tagged.BigNumNegative -> JsonPrimitive(bigIntSupport.negativeFrom(item.content.bytes))
                     is DataItem.Tagged.DecimalFraction -> TODO("Implement toJson for DecimalFraction")
                     is DataItem.Tagged.BigFloat -> TODO("Implement toJson for BigFloat")
                     is DataItem.Tagged.EncodedText -> convert(item.content)
