@@ -6,6 +6,7 @@ kotlinxIo = "0.3.0"
 junit5 = "5.10.1"
 okio = "3.6.0"
 ktlint = "12.0.2"
+ionspinBignum = "0.3.8"
 
 [libraries]
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIo" }
@@ -14,6 +15,7 @@ kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotl
 kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
 junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit5" }
 okio = { group = "com.squareup.okio", name = "okio", version.ref = "okio" }
+ionspin-bignum = { group = "com.ionspin.kotlin", name = "bignum", version.ref = "ionspinBignum" }
 
 [plugins]
 kotlinxKover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kotlinxKover" }

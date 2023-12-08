@@ -1,5 +1,7 @@
 package io.github.routis.cbor
 
+import io.github.routis.cbor.DataItem.Integer.Negative
+
 sealed interface DataItem {
     /**
      * Integer numbers in the range -2^64..2^64-1 inclusive
@@ -7,6 +9,8 @@ sealed interface DataItem {
     sealed interface Integer : DataItem {
         /**
          * Unsigned integer in the range 0..2^64-1 inclusive
+         *
+         * @param value The numeric value
          */
         data class Unsigned(val value: ULong) : Integer {
             init {
@@ -16,6 +20,13 @@ sealed interface DataItem {
 
         /**
          * Negative integer in the range -2^64..-1 inclusive
+         *
+         * Please note that the [value] is the unsigned (zero or positive) representation
+         * of the number.
+         *
+         * To get the actual numeric value, please use [Negative.asBigInteger]
+         *
+         * @param value the unsigned representation of the Negative Integer.
          */
         data class Negative(val value: ULong) : Integer {
             init {
@@ -37,13 +48,11 @@ sealed interface DataItem {
             return bytes.contentEquals(other.bytes)
         }
 
-        override fun hashCode(): Int {
-            return bytes.contentHashCode()
-        }
+        override fun hashCode(): Int = bytes.contentHashCode()
     }
 
     /**
-     * A [text] string  encoded as UTF-8.
+     * A [text] string encoded as UTF-8.
      */
     data class TextString(val text: String) : DataItem
 
@@ -87,8 +96,14 @@ sealed interface DataItem {
                 EpochBasedDateTime<DoublePrecisionFloat>
         }
 
+        /**
+         *  To get the actual numeric value, please use [BigNumUnsigned.asBigInteger]
+         */
         data class BigNumUnsigned(override val content: ByteString) : Tagged<ByteString>
 
+        /**
+         *  To get the actual numeric value, please use [BigNumNegative.asBigInteger]
+         */
         data class BigNumNegative(override val content: ByteString) : Tagged<ByteString>
 
         data class DecimalFraction(val exponent: Integer, val mantissa: Integer) : Tagged<Array> {

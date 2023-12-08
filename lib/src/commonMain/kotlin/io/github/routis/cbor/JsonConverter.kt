@@ -3,11 +3,9 @@
 package io.github.routis.cbor
 
 import io.github.routis.cbor.internal.dataItemToJson
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 import kotlin.io.encoding.Base64
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
 
 typealias KeyMapper<K> = (K) -> String?
 
@@ -73,4 +71,4 @@ data class JsonOptions(
  * @receiver the item to convert
  */
 @JvmOverloads
-fun DataItem.toJson(options: JsonOptions = JsonOptions.Default): JsonElement = dataItemToJson(this, options)
+fun DataItem.toJson(options: JsonOptions = JsonOptions.Default): JsonElement = with(options) { dataItemToJson(this@toJson) }

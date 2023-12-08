@@ -1,29 +1,15 @@
 package io.github.routis.cbor.internal
 
+import com.ionspin.kotlin.bignum.integer.BigInteger
 import io.github.routis.cbor.*
 import kotlinx.serialization.json.*
 
-internal fun dataItemToJson(
-    dataItem: DataItem,
-    options: JsonOptions,
-): JsonElement {
-    val bigIntSupport = bigIntSupport()
-
-    fun keyAsString(k: Key<*>): String? {
-        val keyOptions = options.keyOptions
-        return when (k) {
-            is Key.BoolKey -> keyOptions.boolKeyMapper?.invoke(k)
-            is Key.ByteStringKey -> keyOptions.byteStringKeyMapper?.invoke(k)
-            is Key.IntegerKey -> keyOptions.integerKeyMapper?.invoke(k)
-            is Key.TextStringKey -> k.item.text
-        }
-    }
-
+internal fun JsonOptions.dataItemToJson(dataItem: DataItem): JsonElement {
     fun convert(item: DataItem): JsonElement =
         when (item) {
             is DataItem.Integer.Unsigned -> JsonPrimitive(item.value)
-            is DataItem.Integer.Negative -> JsonPrimitive(bigIntSupport.negativeFrom(item.value))
-            is DataItem.ByteString -> options.byteStringOption(item)
+            is DataItem.Integer.Negative -> item.asBigInteger().toJson()
+            is DataItem.ByteString -> byteStringOption(item)
             is DataItem.TextString -> JsonPrimitive(item.text)
             is DataItem.Array -> item.map(::convert).let(::JsonArray)
             is DataItem.CborMap ->
@@ -39,8 +25,8 @@ internal fun dataItemToJson(
                     is DataItem.Tagged.EpochBasedDateTime.HalfFloat -> convert(item.content)
                     is DataItem.Tagged.EpochBasedDateTime.SingleFloat -> convert(item.content)
                     is DataItem.Tagged.EpochBasedDateTime.DoubleFloat -> convert(item.content)
-                    is DataItem.Tagged.BigNumUnsigned -> JsonPrimitive(bigIntSupport.unsignedFrom(item.content.bytes))
-                    is DataItem.Tagged.BigNumNegative -> JsonPrimitive(bigIntSupport.negativeFrom(item.content.bytes))
+                    is DataItem.Tagged.BigNumUnsigned -> item.asBigInteger().toJson()
+                    is DataItem.Tagged.BigNumNegative -> item.asBigInteger().toJson()
                     is DataItem.Tagged.DecimalFraction -> TODO("Implement toJson for DecimalFraction")
                     is DataItem.Tagged.BigFloat -> TODO("Implement toJson for BigFloat")
                     is DataItem.Tagged.EncodedText -> convert(item.content)
@@ -63,3 +49,13 @@ internal fun dataItemToJson(
 
     return convert(dataItem)
 }
+
+private fun JsonOptions.keyAsString(k: Key<*>): String? =
+    when (k) {
+        is Key.BoolKey -> keyOptions.boolKeyMapper?.invoke(k)
+        is Key.ByteStringKey -> keyOptions.byteStringKeyMapper?.invoke(k)
+        is Key.IntegerKey -> keyOptions.integerKeyMapper?.invoke(k)
+        is Key.TextStringKey -> k.item.text
+    }
+
+private fun BigInteger.toJson() = JsonUnquotedLiteral(toString(10))
