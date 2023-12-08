@@ -3,7 +3,6 @@ package io.github.routis.cbor
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.ionspin.kotlin.bignum.integer.Sign
 
-
 fun DataItem.Integer.asBigInteger(): BigInteger =
     when (this) {
         is DataItem.Integer.Unsigned -> BigInteger.fromULong(value)
