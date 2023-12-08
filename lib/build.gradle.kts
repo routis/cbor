@@ -31,6 +31,7 @@ kotlin {
             dependencies {
                 implementation(libs.kotlinx.io.core)
                 implementation(libs.kotlinx.serialization.json)
+                implementation(libs.ionspin.bignum)
             }
         }
 
