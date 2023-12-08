@@ -140,9 +140,3 @@ sealed interface DataItem {
 
     data class Reserved(val value: UByte) : DataItem
 }
-
-expect fun DataItem.Integer.Negative.asNumber(): Number
-
-expect fun DataItem.Tagged.BigNumUnsigned.asNumber(): Number
-
-expect fun DataItem.Tagged.BigNumNegative.asNumber(): Number

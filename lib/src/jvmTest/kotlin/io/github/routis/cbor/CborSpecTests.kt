@@ -51,7 +51,7 @@ class CborSpecTests {
             }
         }
 
-        return dynamicTest("given a cbor \"${tv.hex}\", when decoding, then it should produce a dataitem  ${tv.decoded ?: tv.diagnostic}}") {
+        return dynamicTest("given a \"${tv.hex}\", decode() should produce ${tv.decoded ?: tv.diagnostic}}") {
             val dataItem = assertDoesNotThrow("Failed decode") {
                 decode(tv.bytes)
             }.also { println(it) }
