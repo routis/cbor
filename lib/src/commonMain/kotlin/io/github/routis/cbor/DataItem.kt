@@ -83,9 +83,7 @@ sealed interface DataItem {
         data class StandardDateTimeString(override val content: TextString) : Tagged<TextString>
 
         sealed interface EpochBasedDateTime<DI : DataItem> : Tagged<DI> {
-            data class Unsigned(override val content: Integer.Unsigned) : EpochBasedDateTime<Integer.Unsigned>
-
-            data class Negative(override val content: Integer.Negative) : EpochBasedDateTime<Integer.Negative>
+            data class Integer(override val content: DataItem.Integer) : EpochBasedDateTime<DataItem.Integer>
 
             data class HalfFloat(override val content: HalfPrecisionFloat) : EpochBasedDateTime<HalfPrecisionFloat>
 
