@@ -114,8 +114,7 @@ internal fun DataItem.tagged(tag: Tag): DataItem.Tagged<DataItem> {
             Tag.StandardDateTimeString -> DataItem.Tagged.StandardDateTimeString(expected(dataItem))
             Tag.EpochBasedDateTime ->
                 when (dataItem) {
-                    is DataItem.Integer.Unsigned -> DataItem.Tagged.EpochBasedDateTime.Unsigned(dataItem)
-                    is DataItem.Integer.Negative -> DataItem.Tagged.EpochBasedDateTime.Negative(dataItem)
+                    is DataItem.Integer -> DataItem.Tagged.EpochBasedDateTime.Integer(dataItem)
                     is DataItem.HalfPrecisionFloat -> DataItem.Tagged.EpochBasedDateTime.HalfFloat(dataItem)
                     is DataItem.SinglePrecisionFloat -> DataItem.Tagged.EpochBasedDateTime.SingleFloat(dataItem)
                     is DataItem.DoublePrecisionFloat -> DataItem.Tagged.EpochBasedDateTime.DoubleFloat(dataItem)

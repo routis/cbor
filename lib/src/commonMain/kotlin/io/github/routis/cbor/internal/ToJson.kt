@@ -20,8 +20,7 @@ internal fun JsonOptions.dataItemToJson(dataItem: DataItem): JsonElement {
             is DataItem.Tagged<*> ->
                 when (item) {
                     is DataItem.Tagged.StandardDateTimeString -> convert(item.content)
-                    is DataItem.Tagged.EpochBasedDateTime.Unsigned -> convert(item.content)
-                    is DataItem.Tagged.EpochBasedDateTime.Negative -> convert(item.content)
+                    is DataItem.Tagged.EpochBasedDateTime.Integer -> convert(item.content)
                     is DataItem.Tagged.EpochBasedDateTime.HalfFloat -> convert(item.content)
                     is DataItem.Tagged.EpochBasedDateTime.SingleFloat -> convert(item.content)
                     is DataItem.Tagged.EpochBasedDateTime.DoubleFloat -> convert(item.content)
