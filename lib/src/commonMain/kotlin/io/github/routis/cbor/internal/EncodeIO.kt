@@ -1,6 +1,6 @@
 package io.github.routis.cbor.internal
 
-import io.github.routis.cbor.DataItem
+import io.github.routis.cbor.*
 import kotlinx.io.*
 
 /**
@@ -9,29 +9,29 @@ import kotlinx.io.*
 @Throws(IOException::class)
 internal fun Sink.writeDataItem(item: DataItem) {
     when (item) {
-        is DataItem.Integer.Unsigned -> writeInitialByteAndUnsignedInteger(MajorType.Zero, item.value)
-        is DataItem.Integer.Negative -> writeInitialByteAndUnsignedInteger(MajorType.One, item.value)
-        is DataItem.ByteString -> {
+        is UnsignedIntegerDataItem -> writeInitialByteAndUnsignedInteger(MajorType.Zero, item.value)
+        is NegativeIntegerDataItem -> writeInitialByteAndUnsignedInteger(MajorType.One, item.value)
+        is ByteStringDataItem -> {
             val bytes = item.bytes
             val byteCount = item.bytes.size
             writeInitialByteAndUnsignedInteger(MajorType.Two, byteCount.toULong())
             write(bytes)
         }
 
-        is DataItem.TextString -> {
+        is TextStringDataItem -> {
             val bytes = item.text.encodeToByteArray()
             val byteCount = bytes.size
             writeInitialByteAndUnsignedInteger(MajorType.Three, byteCount.toULong())
             write(bytes)
         }
 
-        is DataItem.Array -> {
+        is ArrayDataItem -> {
             val elementsNo = item.size
             writeInitialByteAndUnsignedInteger(MajorType.Four, elementsNo.toULong())
             item.forEach { element -> writeDataItem(element) }
         }
 
-        is DataItem.CborMap -> {
+        is MapDataItem -> {
             val entriesNo = item.size
             writeInitialByteAndUnsignedInteger(MajorType.Five, entriesNo.toULong())
             item.forEach { (key, value) ->
@@ -40,13 +40,13 @@ internal fun Sink.writeDataItem(item: DataItem) {
             }
         }
 
-        is DataItem.Tagged<*> -> {
+        is TaggedDataItem<*> -> {
             val tagValue = item.tagValue()
             writeInitialByteAndUnsignedInteger(MajorType.Six, tagValue)
             writeDataItem(item.content)
         }
 
-        is DataItem.Bool -> {
+        is BooleanDataItem -> {
             if (item.value) {
                 writeMajorSevenInitialByte(AdditionalInfo.BOOLEAN_TRUE)
             } else {
@@ -54,29 +54,29 @@ internal fun Sink.writeDataItem(item: DataItem) {
             }
         }
 
-        DataItem.Null -> writeMajorSevenInitialByte(AdditionalInfo.NULL)
-        DataItem.Undefined -> writeMajorSevenInitialByte(AdditionalInfo.UNDEFINED)
-        is DataItem.Reserved -> {
+        NullDataItem -> writeMajorSevenInitialByte(AdditionalInfo.NULL)
+        UndefinedDataItem -> writeMajorSevenInitialByte(AdditionalInfo.UNDEFINED)
+        is ReservedDataItem -> {
             writeMajorSevenInitialByte(AdditionalInfo.RESERVED_OR_UNASSIGNED)
             writeUByte(item.value)
         }
 
-        is DataItem.HalfPrecisionFloat -> {
+        is HalfPrecisionFloatDataItem -> {
             writeMajorSevenInitialByte(AdditionalInfo.HALF_PRECISION_FLOAT)
             writeShort(halfBitsFromFloat(item.value))
         }
 
-        is DataItem.SinglePrecisionFloat -> {
+        is SinglePrecisionFloatDataItem -> {
             writeMajorSevenInitialByte(AdditionalInfo.SINGLE_PRECISION_FLOAT)
             writeFloat(item.value)
         }
 
-        is DataItem.DoublePrecisionFloat -> {
+        is DoublePrecisionFloatDataItem -> {
             writeMajorSevenInitialByte(AdditionalInfo.DOUBLE_PRECISION_FLOAT)
             writeDouble(item.value)
         }
 
-        is DataItem.Unassigned -> {
+        is UnassignedDataItem -> {
             val (additionalInfo, next) =
                 when (item.value) {
                     in 0u..19u -> item.value to null

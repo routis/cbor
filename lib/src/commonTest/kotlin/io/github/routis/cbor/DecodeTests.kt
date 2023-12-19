@@ -1,5 +1,6 @@
 package io.github.routis.cbor
 
+import com.ionspin.kotlin.bignum.integer.BigInteger
 import kotlinx.serialization.encodeToString
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -8,7 +9,7 @@ class DecodeTests {
     @Test
     fun major_0_single_byte() {
         for (i in 0..23) {
-            val expected = DataItem.Integer.Unsigned(i.toULong())
+            val expected = UnsignedIntegerDataItem(i.toULong())
             val decoded = decode(byteArrayOf(i.toByte()))
             assertEquals(expected, decoded)
         }
@@ -18,7 +19,7 @@ class DecodeTests {
     fun major_0_0b000_01010_is_uint_10() {
         val bytes = byteArrayOf(0b000_01010.toByte())
         val decoded = decode(bytes)
-        assertEquals(DataItem.Integer.Unsigned(10uL), decoded)
+        assertEquals(UnsignedIntegerDataItem(10uL), decoded)
     }
 
     @Test
@@ -30,7 +31,7 @@ class DecodeTests {
                 0xF4.toByte(),
             )
         val decoded = decode(bytes)
-        assertEquals(DataItem.Integer.Unsigned(500uL), decoded)
+        assertEquals(UnsignedIntegerDataItem(500uL), decoded)
     }
 
     @Test
@@ -44,7 +45,52 @@ class DecodeTests {
                 0xF3.toByte(),
             )
         val decoded = decode(bytes)
-        assertEquals(DataItem.Integer.Negative(value499), decoded)
+        assertEquals(NegativeIntegerDataItem(value499), decoded)
+    }
+
+    @Test
+    fun value_1000000000000() {
+        val bytes: ByteArray =
+            byteArrayOf(
+                0x1B, 0x00, 0x00, 0x00,
+                0xE8.toByte(), 0xD4.toByte(), 0xA5.toByte(), 0x10,
+                0x00,
+            )
+        val decoded = decode(bytes)
+        val expected = UnsignedIntegerDataItem(1000000000000uL)
+        assertEquals(expected, decoded)
+    }
+
+    @Test
+    fun value_18446744073709551616() {
+        val bytes =
+            byteArrayOf(
+                0xC2.toByte(), 0x49.toByte(), 0x01.toByte(), 0x00.toByte(),
+                0x00.toByte(), 0x00.toByte(), 0x00.toByte(), 0x00.toByte(),
+                0x00.toByte(), 0x00.toByte(), 0x00.toByte(),
+            )
+        val decoded = decode(bytes)
+
+        val expected = BigNumUnsigned(ByteStringDataItem(BigInteger.parseString("18446744073709551616").toByteArray()))
+        assertEquals(expected, decoded)
+    }
+
+    @Test
+    fun value_uri() {
+        val bytes =
+            byteArrayOf(
+                0xd8.toByte(), 0x20.toByte(), 0x76.toByte(), 0x68.toByte(),
+                0x74.toByte(), 0x74.toByte(), 0x70.toByte(), 0x3a.toByte(),
+                0x2f.toByte(), 0x2f.toByte(), 0x77.toByte(), 0x77.toByte(),
+                0x77.toByte(), 0x2e.toByte(), 0x65.toByte(), 0x78.toByte(),
+                0x61.toByte(), 0x6d.toByte(), 0x70.toByte(), 0x6c.toByte(),
+                0x65.toByte(), 0x2e.toByte(), 0x63.toByte(), 0x6f.toByte(),
+                0x6d.toByte(),
+            )
+        val decoded = decode(bytes)
+
+        val expected = UriDataItem("http://www.example.com")
+        assertEquals(expected, decoded)
     }
 
     @Test

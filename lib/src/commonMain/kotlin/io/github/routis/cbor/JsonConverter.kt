@@ -10,33 +10,33 @@ import kotlin.io.encoding.Base64
 typealias KeyMapper<K> = (K) -> String?
 
 /**
- * Options on if and how to serialize a [Key] other than [Key.TextStringKey],
+ * Options on if and how to serialize a [Key] other than [TextStringKey],
  * into a Json attribute name.
- * One may choose to not map into Json other keys (besides [Key.TextStringKey])
+ * One may choose to not map into Json other keys (besides [TextStringKey])
  * to make sure that there is no key collision in JSON.
  *
- * @param boolKeyMapper how to include [Key.BoolKey]
- * @param byteStringKeyMapper how to include [Key.ByteStringKey]
- * @param integerKeyMapper how to include [Key.IntegerKey]
+ * @param boolKeyMapper how to include [BoolKey]
+ * @param byteStringKeyMapper how to include [ByteStringKey]
+ * @param integerKeyMapper how to include [IntegerKey]
  */
 data class KeyOptions
     @JvmOverloads
     constructor(
-        val boolKeyMapper: KeyMapper<Key.BoolKey>? = null,
-        val byteStringKeyMapper: KeyMapper<Key.ByteStringKey>? = null,
-        val integerKeyMapper: KeyMapper<Key.IntegerKey>? = null,
+        val boolKeyMapper: KeyMapper<BoolKey>? = null,
+        val byteStringKeyMapper: KeyMapper<ByteStringKey>? = null,
+        val integerKeyMapper: KeyMapper<IntegerKey>? = null,
     )
 
 /**
- * A function that serializes a [DataItem.ByteString] into a [JsonElement]
+ * A function that serializes a [ByteStringDataItem] into a [JsonElement]
  */
-typealias ByteStringOption = (DataItem.ByteString) -> JsonElement
+typealias ByteStringOption = (ByteStringDataItem) -> JsonElement
 
 /**
  * Options for converting a [DataItem] into Json
  *
- * @param keyOptions options about [keys][Key] of [maps][DataItem.CborMap]
- * @param byteStringOption how to serialize into JSON a [DataItem.ByteString]
+ * @param keyOptions options about [keys][Key] of [maps][MapDataItem]
+ * @param byteStringOption how to serialize into JSON a [ByteStringDataItem]
  */
 data class JsonOptions(
     val keyOptions: KeyOptions,
@@ -44,14 +44,14 @@ data class JsonOptions(
 ) {
     companion object {
         /**
-         * Serializes a [DataItem.ByteString] into a base64 url encoded string
+         * Serializes a [ByteStringDataItem] into a base64 url encoded string
          */
         @JvmStatic
         val Base64UrlEncodedBytes: ByteStringOption =
             { byteString -> JsonPrimitive(Base64.UrlSafe.encode(byteString.bytes)) }
 
         /**
-         * Choice to use only [text keys][Key.TextStringKey]
+         * Choice to use only [text keys][TextStringKey]
          */
         @JvmStatic
         val UseOnlyTextKey: KeyOptions =
