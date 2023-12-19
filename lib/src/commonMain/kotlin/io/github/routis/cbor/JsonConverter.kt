@@ -28,15 +28,15 @@ data class KeyOptions
     )
 
 /**
- * A function that serializes a [DataItem.ByteString] into a [JsonElement]
+ * A function that serializes a [ByteStringDataItem] into a [JsonElement]
  */
-typealias ByteStringOption = (DataItem.ByteString) -> JsonElement
+typealias ByteStringOption = (ByteStringDataItem) -> JsonElement
 
 /**
  * Options for converting a [DataItem] into Json
  *
- * @param keyOptions options about [keys][Key] of [maps][DataItem.CborMap]
- * @param byteStringOption how to serialize into JSON a [DataItem.ByteString]
+ * @param keyOptions options about [keys][Key] of [maps][MapDataItem]
+ * @param byteStringOption how to serialize into JSON a [ByteStringDataItem]
  */
 data class JsonOptions(
     val keyOptions: KeyOptions,
@@ -44,7 +44,7 @@ data class JsonOptions(
 ) {
     companion object {
         /**
-         * Serializes a [DataItem.ByteString] into a base64 url encoded string
+         * Serializes a [ByteStringDataItem] into a base64 url encoded string
          */
         @JvmStatic
         val Base64UrlEncodedBytes: ByteStringOption =

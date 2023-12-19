@@ -1,7 +1,7 @@
 package io.github.routis.cbor
 
 /**
- * [Data items][DataItem] that can be used as keys in a [CBOR map][DataItem.CborMap]
+ * [Data items][DataItem] that can be used as keys in a [CBOR map][MapDataItem]
  * @param DI The type of the data item
  */
 sealed interface Key<out DI : DataItem> {
@@ -11,13 +11,13 @@ sealed interface Key<out DI : DataItem> {
     val item: DI
 }
 
-data class BoolKey(override val item: DataItem.Bool) : Key<DataItem.Bool>
+data class BoolKey(override val item: BooleanDataItem) : Key<BooleanDataItem>
 
-data class ByteStringKey(override val item: DataItem.ByteString) : Key<DataItem.ByteString>
+data class ByteStringKey(override val item: ByteStringDataItem) : Key<ByteStringDataItem>
 
-data class IntegerKey(override val item: DataItem.Integer) : Key<DataItem.Integer>
+data class IntegerKey(override val item: IntegerDataItem) : Key<IntegerDataItem>
 
-data class TextStringKey(override val item: DataItem.TextString) : Key<DataItem.TextString>
+data class TextStringKey(override val item: TextStringDataItem) : Key<TextStringDataItem>
 
 /**
  * Creates a [Key] for the given [dataItem]
@@ -25,10 +25,10 @@ data class TextStringKey(override val item: DataItem.TextString) : Key<DataItem.
  */
 fun keyOf(dataItem: DataItem): Key<DataItem>? =
     when (dataItem) {
-        is DataItem.Bool -> BoolKey(dataItem)
-        is DataItem.ByteString -> ByteStringKey(dataItem)
-        is DataItem.Integer.Unsigned -> IntegerKey(dataItem)
-        is DataItem.Integer.Negative -> IntegerKey(dataItem)
-        is DataItem.TextString -> TextStringKey(dataItem)
+        is BooleanDataItem -> BoolKey(dataItem)
+        is ByteStringDataItem -> ByteStringKey(dataItem)
+        is UnsignedIntegerDataItem -> IntegerKey(dataItem)
+        is NegativeIntegerDataItem -> IntegerKey(dataItem)
+        is TextStringDataItem -> TextStringKey(dataItem)
         else -> null
     }

@@ -1,7 +1,6 @@
 package io.github.routis.cbor.internal
 
-import io.github.routis.cbor.DataItem
-import io.github.routis.cbor.keyOf
+import io.github.routis.cbor.*
 import kotlinx.io.*
 import kotlin.contracts.contract
 
@@ -54,35 +53,35 @@ private fun Source.readDataItemOrBreak(): DataItemOrBreak {
     }
 }
 
-private fun Source.readUnsignedInteger(additionalInfo: AdditionalInfo): DataItem.Integer.Unsigned {
+private fun Source.readUnsignedInteger(additionalInfo: AdditionalInfo): UnsignedIntegerDataItem {
     val value = readUnsignedInt(additionalInfo)
-    return DataItem.Integer.Unsigned(value)
+    return UnsignedIntegerDataItem(value)
 }
 
-private fun Source.readNegativeInteger(additionalInfo: AdditionalInfo): DataItem.Integer.Negative {
+private fun Source.readNegativeInteger(additionalInfo: AdditionalInfo): NegativeIntegerDataItem {
     val value = readUnsignedInt(additionalInfo)
-    return DataItem.Integer.Negative(value)
+    return NegativeIntegerDataItem(value)
 }
 
 private const val BRAKE_BYTE: UByte = 0b111_11111u
 
-private fun Source.readByteString(size: Size): DataItem.ByteString {
+private fun Source.readByteString(size: Size): ByteStringDataItem {
     val byteCount =
         when (size) {
             Size.Indefinite -> indexOf(BRAKE_BYTE.toByte())
             is Size.Definite -> size.value.toLong()
         }
     val bytes = readByteArray(byteCount.toInt())
-    return DataItem.ByteString(bytes)
+    return ByteStringDataItem(bytes)
 }
 
-private fun Source.readTextString(size: Size): DataItem.TextString {
+private fun Source.readTextString(size: Size): TextStringDataItem {
     val text =
         when (size) {
             Size.Indefinite -> {
                 var buffer = ""
                 untilBreak { item ->
-                    require(item is DataItem.TextString)
+                    require(item is TextStringDataItem)
                     buffer += item.text
                 }
                 buffer
@@ -95,10 +94,10 @@ private fun Source.readTextString(size: Size): DataItem.TextString {
             }
         }
 
-    return DataItem.TextString(text)
+    return TextStringDataItem(text)
 }
 
-private fun Source.readArray(size: Size): DataItem.Array {
+private fun Source.readArray(size: Size): ArrayDataItem {
     val items =
         buildList {
             when (size) {
@@ -106,10 +105,10 @@ private fun Source.readArray(size: Size): DataItem.Array {
                 is Size.Definite -> repeat(size.value) { add(readDataItem()) }
             }
         }
-    return DataItem.Array(items)
+    return ArrayDataItem(items)
 }
 
-private fun Source.readMap(size: Size): DataItem.CborMap {
+private fun Source.readMap(size: Size): MapDataItem {
     val items =
         buildMap {
             fun put(item: DataItem) {
@@ -125,35 +124,35 @@ private fun Source.readMap(size: Size): DataItem.CborMap {
             }
         }
 
-    return DataItem.CborMap(items)
+    return MapDataItem(items)
 }
 
-private fun Source.readTagged(additionalInfo: AdditionalInfo): DataItem.Tagged<*> {
+private fun Source.readTagged(additionalInfo: AdditionalInfo): TaggedDataItem<*> {
     val tag = readUnsignedInt(additionalInfo)
     val dataItem = readDataItem()
     return when (val supportedTag = Tag.of(tag)) {
-        null -> DataItem.Tagged.Unsupported(tag, dataItem)
+        null -> UnsupportedTagDataItem(tag, dataItem)
         else -> dataItem.tagged(supportedTag)
     }
 }
 
 private fun Source.readMajorSeven(additionalInfo: AdditionalInfo): DataItemOrBreak {
     return when (additionalInfo.value) {
-        in 0u..19u -> DataItem.Unassigned(additionalInfo.value).orBreak()
-        AdditionalInfo.BOOLEAN_FALSE -> DataItem.Bool(false).orBreak()
-        AdditionalInfo.BOOLEAN_TRUE -> DataItem.Bool(true).orBreak()
-        AdditionalInfo.NULL -> DataItem.Null.orBreak()
-        AdditionalInfo.UNDEFINED -> DataItem.Undefined.orBreak()
+        in 0u..19u -> UnassignedDataItem(additionalInfo.value).orBreak()
+        AdditionalInfo.BOOLEAN_FALSE -> BooleanDataItem(false).orBreak()
+        AdditionalInfo.BOOLEAN_TRUE -> BooleanDataItem(true).orBreak()
+        AdditionalInfo.NULL -> NullDataItem.orBreak()
+        AdditionalInfo.UNDEFINED -> UndefinedDataItem.orBreak()
         AdditionalInfo.RESERVED_OR_UNASSIGNED ->
             when (val next = readUByte()) {
-                in 0.toUByte()..31.toUByte() -> DataItem.Reserved(next)
-                else -> DataItem.Unassigned(next)
+                in 0.toUByte()..31.toUByte() -> ReservedDataItem(next)
+                else -> UnassignedDataItem(next)
             }.orBreak()
 
-        AdditionalInfo.HALF_PRECISION_FLOAT -> DataItem.HalfPrecisionFloat(floatFromHalfBits(readShort())).orBreak()
-        AdditionalInfo.SINGLE_PRECISION_FLOAT -> DataItem.SinglePrecisionFloat(Float.fromBits(readInt())).orBreak()
-        AdditionalInfo.DOUBLE_PRECISION_FLOAT -> DataItem.DoublePrecisionFloat(Double.fromBits(readLong())).orBreak()
-        in 28u..30u -> DataItem.Unassigned(additionalInfo.value).orBreak()
+        AdditionalInfo.HALF_PRECISION_FLOAT -> HalfPrecisionFloatDataItem(floatFromHalfBits(readShort())).orBreak()
+        AdditionalInfo.SINGLE_PRECISION_FLOAT -> SinglePrecisionFloatDataItem(Float.fromBits(readInt())).orBreak()
+        AdditionalInfo.DOUBLE_PRECISION_FLOAT -> DoublePrecisionFloatDataItem(Double.fromBits(readLong())).orBreak()
+        in 28u..30u -> UnassignedDataItem(additionalInfo.value).orBreak()
         AdditionalInfo.BREAK -> DataItemOrBreak.Break
         else -> error("Not supported")
     }

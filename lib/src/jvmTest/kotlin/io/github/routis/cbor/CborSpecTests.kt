@@ -36,19 +36,19 @@ class CborSpecTests {
             dataItemJson: JsonElement?,
         ) {
             when (this) {
-                is DataItem.SinglePrecisionFloat ->
+                is SinglePrecisionFloatDataItem ->
                     assertEquals(
                         expected.jsonPrimitive.floatOrNull,
                         dataItemJson?.jsonPrimitive?.floatOrNull,
                     )
 
-                is DataItem.DoublePrecisionFloat ->
+                is DoublePrecisionFloatDataItem ->
                     assertEquals(
                         expected.jsonPrimitive.doubleOrNull,
                         dataItemJson?.jsonPrimitive?.doubleOrNull,
                     )
 
-                is DataItem.HalfPrecisionFloat ->
+                is HalfPrecisionFloatDataItem ->
                     assertEquals(
                         expected.jsonPrimitive.floatOrNull,
                         dataItemJson?.jsonPrimitive?.floatOrNull,

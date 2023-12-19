@@ -9,7 +9,7 @@ class DecodeTests {
     @Test
     fun major_0_single_byte() {
         for (i in 0..23) {
-            val expected = DataItem.Integer.Unsigned(i.toULong())
+            val expected = UnsignedIntegerDataItem(i.toULong())
             val decoded = decode(byteArrayOf(i.toByte()))
             assertEquals(expected, decoded)
         }
@@ -19,7 +19,7 @@ class DecodeTests {
     fun major_0_0b000_01010_is_uint_10() {
         val bytes = byteArrayOf(0b000_01010.toByte())
         val decoded = decode(bytes)
-        assertEquals(DataItem.Integer.Unsigned(10uL), decoded)
+        assertEquals(UnsignedIntegerDataItem(10uL), decoded)
     }
 
     @Test
@@ -31,7 +31,7 @@ class DecodeTests {
                 0xF4.toByte(),
             )
         val decoded = decode(bytes)
-        assertEquals(DataItem.Integer.Unsigned(500uL), decoded)
+        assertEquals(UnsignedIntegerDataItem(500uL), decoded)
     }
 
     @Test
@@ -45,7 +45,7 @@ class DecodeTests {
                 0xF3.toByte(),
             )
         val decoded = decode(bytes)
-        assertEquals(DataItem.Integer.Negative(value499), decoded)
+        assertEquals(NegativeIntegerDataItem(value499), decoded)
     }
 
     @Test
@@ -57,7 +57,7 @@ class DecodeTests {
                 0x00,
             )
         val decoded = decode(bytes)
-        val expected = DataItem.Integer.Unsigned(1000000000000uL)
+        val expected = UnsignedIntegerDataItem(1000000000000uL)
         assertEquals(expected, decoded)
     }
 
@@ -71,7 +71,7 @@ class DecodeTests {
             )
         val decoded = decode(bytes)
 
-        val expected = DataItem.Tagged.BigNumUnsigned(DataItem.ByteString(BigInteger.parseString("18446744073709551616").toByteArray()))
+        val expected = BigNumUnsigned(ByteStringDataItem(BigInteger.parseString("18446744073709551616").toByteArray()))
         assertEquals(expected, decoded)
     }
 
@@ -89,7 +89,7 @@ class DecodeTests {
             )
         val decoded = decode(bytes)
 
-        val expected = DataItem.Tagged.EncodedText.Uri(DataItem.TextString("http://www.example.com"))
+        val expected = UriDataItem("http://www.example.com")
         assertEquals(expected, decoded)
     }
 

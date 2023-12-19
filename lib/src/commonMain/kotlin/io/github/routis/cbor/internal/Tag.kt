@@ -1,6 +1,6 @@
 package io.github.routis.cbor.internal
 
-import io.github.routis.cbor.DataItem
+import io.github.routis.cbor.*
 
 internal sealed interface Tag {
     data object StandardDateTimeString : Tag
@@ -87,56 +87,56 @@ internal fun Tag.value(): ULong =
         Tag.CalendarDate -> 1004uL
     }
 
-internal fun DataItem.Tagged<*>.tagValue(): ULong =
+internal fun TaggedDataItem<*>.tagValue(): ULong =
     when (this) {
-        is DataItem.Tagged.StandardDateTimeString -> Tag.StandardDateTimeString.value()
-        is DataItem.Tagged.EpochBasedDateTime<*> -> Tag.EpochBasedDateTime.value()
-        is DataItem.Tagged.BigNumUnsigned -> Tag.BigNumUnsigned.value()
-        is DataItem.Tagged.BigNumNegative -> Tag.BigNumNegative.value()
-        is DataItem.Tagged.DecimalFraction -> Tag.DecimalFraction.value()
-        is DataItem.Tagged.BigFloat -> Tag.BigFloat.value()
-        is DataItem.Tagged.EncodedText.Base64 -> Tag.Base64.value()
-        is DataItem.Tagged.EncodedText.Base64Url -> Tag.Base64Url.value()
-        is DataItem.Tagged.EncodedText.Mime -> Tag.Mime.value()
-        is DataItem.Tagged.EncodedText.Regex -> Tag.Regex.value()
-        is DataItem.Tagged.EncodedText.Uri -> Tag.Uri.value()
-        is DataItem.Tagged.CborDataItem -> Tag.CborDataItem.value()
-        is DataItem.Tagged.SelfDescribedCbor -> Tag.SelfDescribedCbor.value()
-        is DataItem.Tagged.Unsupported -> tag
-        is DataItem.Tagged.CalendarDay -> Tag.CalendarDay.value()
-        is DataItem.Tagged.CalendarDate -> Tag.CalendarDate.value()
+        is StandardDateTimeDataItem -> Tag.StandardDateTimeString.value()
+        is EpochBasedDateTime<*> -> Tag.EpochBasedDateTime.value()
+        is BigNumUnsigned -> Tag.BigNumUnsigned.value()
+        is BigNumNegative -> Tag.BigNumNegative.value()
+        is DecimalFraction -> Tag.DecimalFraction.value()
+        is BigFloat -> Tag.BigFloat.value()
+        is Base64DataItem -> Tag.Base64.value()
+        is Base64UrlDataItem -> Tag.Base64Url.value()
+        is MimeDataItem -> Tag.Mime.value()
+        is RegexDataItem -> Tag.Regex.value()
+        is UriDataItem -> Tag.Uri.value()
+        is CborDataItem -> Tag.CborDataItem.value()
+        is SelfDescribedCbor -> Tag.SelfDescribedCbor.value()
+        is UnsupportedTagDataItem -> tag
+        is CalendarDayDataItem -> Tag.CalendarDay.value()
+        is CalendarDateDataItem -> Tag.CalendarDate.value()
     }
 
-internal fun DataItem.tagged(tag: Tag): DataItem.Tagged<DataItem> {
+internal fun DataItem.tagged(tag: Tag): TaggedDataItem<DataItem> {
     val dataItem = this
     return with(tag) {
         when (this) {
-            Tag.StandardDateTimeString -> DataItem.Tagged.StandardDateTimeString(expected(dataItem))
+            Tag.StandardDateTimeString -> StandardDateTimeDataItem(expected(dataItem))
             Tag.EpochBasedDateTime ->
                 when (dataItem) {
-                    is DataItem.Integer -> DataItem.Tagged.EpochBasedDateTime.Integer(dataItem)
-                    is DataItem.HalfPrecisionFloat -> DataItem.Tagged.EpochBasedDateTime.HalfFloat(dataItem)
-                    is DataItem.SinglePrecisionFloat -> DataItem.Tagged.EpochBasedDateTime.SingleFloat(dataItem)
-                    is DataItem.DoublePrecisionFloat -> DataItem.Tagged.EpochBasedDateTime.DoubleFloat(dataItem)
+                    is IntegerDataItem -> IntegerEpochDataItem(dataItem)
+                    is HalfPrecisionFloatDataItem -> HalfFloatEpochDataItem(dataItem)
+                    is SinglePrecisionFloatDataItem -> SingleFloatEpochDataItem(dataItem)
+                    is DoublePrecisionFloatDataItem -> DoubleFloatEpochDataItem(dataItem)
                     else -> error("$dataItem is not valid for $this. Expecting integer or float")
                 }
 
-            Tag.BigNumUnsigned -> DataItem.Tagged.BigNumUnsigned(expected(dataItem))
-            Tag.BigNumNegative -> DataItem.Tagged.BigNumNegative(expected(dataItem))
-            Tag.DecimalFraction -> exponentAndMantissa(dataItem) { e, m -> DataItem.Tagged.DecimalFraction(e, m) }
-            Tag.BigFloat -> exponentAndMantissa(dataItem) { e, m -> DataItem.Tagged.BigFloat(e, m) }
-            Tag.ToBase16 -> DataItem.Tagged.Unsupported(value(), dataItem) // TODO
-            Tag.ToBase64 -> DataItem.Tagged.Unsupported(value(), dataItem) // TODO
-            Tag.ToBase64Url -> DataItem.Tagged.Unsupported(value(), dataItem) // TODO
-            Tag.CborDataItem -> DataItem.Tagged.CborDataItem(expected(dataItem))
-            Tag.SelfDescribedCbor -> DataItem.Tagged.SelfDescribedCbor(dataItem)
-            Tag.Uri -> DataItem.Tagged.EncodedText.Uri(expected(dataItem))
-            Tag.Base64Url -> DataItem.Tagged.EncodedText.Base64Url(expected(dataItem))
-            Tag.Base64 -> DataItem.Tagged.EncodedText.Base64(expected(dataItem))
-            Tag.Regex -> DataItem.Tagged.EncodedText.Regex(expected(dataItem))
-            Tag.Mime -> DataItem.Tagged.EncodedText.Mime(expected(dataItem))
-            Tag.CalendarDay -> DataItem.Tagged.CalendarDay(expected(dataItem))
-            Tag.CalendarDate -> DataItem.Tagged.CalendarDate(expected(dataItem))
+            Tag.BigNumUnsigned -> BigNumUnsigned(expected(dataItem))
+            Tag.BigNumNegative -> BigNumNegative(expected(dataItem))
+            Tag.DecimalFraction -> exponentAndMantissa(dataItem) { e, m -> DecimalFraction(e, m) }
+            Tag.BigFloat -> exponentAndMantissa(dataItem) { e, m -> BigFloat(e, m) }
+            Tag.ToBase16 -> UnsupportedTagDataItem(value(), dataItem) // TODO
+            Tag.ToBase64 -> UnsupportedTagDataItem(value(), dataItem) // TODO
+            Tag.ToBase64Url -> UnsupportedTagDataItem(value(), dataItem) // TODO
+            Tag.CborDataItem -> CborDataItem(expected(dataItem))
+            Tag.SelfDescribedCbor -> SelfDescribedCbor(dataItem)
+            Tag.Uri -> UriDataItem(expected(dataItem))
+            Tag.Base64Url -> Base64UrlDataItem(expected(dataItem))
+            Tag.Base64 -> Base64DataItem(expected(dataItem))
+            Tag.Regex -> RegexDataItem(expected(dataItem))
+            Tag.Mime -> MimeDataItem(expected(dataItem))
+            Tag.CalendarDay -> CalendarDayDataItem(expected(dataItem))
+            Tag.CalendarDate -> CalendarDateDataItem(expected(dataItem))
         }
     }
 }
@@ -148,9 +148,9 @@ private inline fun <reified DI : DataItem> Tag.expected(dataItem: DataItem): DI 
 
 private fun <DI> Tag.exponentAndMantissa(
     dataItem: DataItem,
-    cons: (DataItem.Integer, DataItem.Integer) -> DI,
+    cons: (IntegerDataItem, IntegerDataItem) -> DI,
 ): DI {
-    val array = expected<DataItem.Array>(dataItem)
+    val array = expected<ArrayDataItem>(dataItem)
     require(array.size == 2) { "Array must have 2 elements" }
     return cons(expected(array[0]), expected(array[1]))
 }
