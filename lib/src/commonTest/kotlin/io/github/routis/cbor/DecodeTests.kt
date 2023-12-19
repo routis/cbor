@@ -1,5 +1,6 @@
 package io.github.routis.cbor
 
+import com.ionspin.kotlin.bignum.integer.BigInteger
 import kotlinx.serialization.encodeToString
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -45,6 +46,51 @@ class DecodeTests {
             )
         val decoded = decode(bytes)
         assertEquals(DataItem.Integer.Negative(value499), decoded)
+    }
+
+    @Test
+    fun value_1000000000000() {
+        val bytes: ByteArray =
+            byteArrayOf(
+                0x1B, 0x00, 0x00, 0x00,
+                0xE8.toByte(), 0xD4.toByte(), 0xA5.toByte(), 0x10,
+                0x00,
+            )
+        val decoded = decode(bytes)
+        val expected = DataItem.Integer.Unsigned(1000000000000uL)
+        assertEquals(expected, decoded)
+    }
+
+    @Test
+    fun value_18446744073709551616() {
+        val bytes =
+            byteArrayOf(
+                0xC2.toByte(), 0x49.toByte(), 0x01.toByte(), 0x00.toByte(),
+                0x00.toByte(), 0x00.toByte(), 0x00.toByte(), 0x00.toByte(),
+                0x00.toByte(), 0x00.toByte(), 0x00.toByte(),
+            )
+        val decoded = decode(bytes)
+
+        val expected = DataItem.Tagged.BigNumUnsigned(DataItem.ByteString(BigInteger.parseString("18446744073709551616").toByteArray()))
+        assertEquals(expected, decoded)
+    }
+
+    @Test
+    fun value_uri() {
+        val bytes =
+            byteArrayOf(
+                0xd8.toByte(), 0x20.toByte(), 0x76.toByte(), 0x68.toByte(),
+                0x74.toByte(), 0x74.toByte(), 0x70.toByte(), 0x3a.toByte(),
+                0x2f.toByte(), 0x2f.toByte(), 0x77.toByte(), 0x77.toByte(),
+                0x77.toByte(), 0x2e.toByte(), 0x65.toByte(), 0x78.toByte(),
+                0x61.toByte(), 0x6d.toByte(), 0x70.toByte(), 0x6c.toByte(),
+                0x65.toByte(), 0x2e.toByte(), 0x63.toByte(), 0x6f.toByte(),
+                0x6d.toByte(),
+            )
+        val decoded = decode(bytes)
+
+        val expected = DataItem.Tagged.EncodedText.Uri(DataItem.TextString("http://www.example.com"))
+        assertEquals(expected, decoded)
     }
 
     @Test

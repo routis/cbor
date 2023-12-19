@@ -51,10 +51,10 @@ internal fun JsonOptions.dataItemToJson(dataItem: DataItem): JsonElement {
 
 private fun JsonOptions.keyAsString(k: Key<*>): String? =
     when (k) {
-        is Key.BoolKey -> keyOptions.boolKeyMapper?.invoke(k)
-        is Key.ByteStringKey -> keyOptions.byteStringKeyMapper?.invoke(k)
-        is Key.IntegerKey -> keyOptions.integerKeyMapper?.invoke(k)
-        is Key.TextStringKey -> k.item.text
+        is BoolKey -> keyOptions.boolKeyMapper?.invoke(k)
+        is ByteStringKey -> keyOptions.byteStringKeyMapper?.invoke(k)
+        is IntegerKey -> keyOptions.integerKeyMapper?.invoke(k)
+        is TextStringKey -> k.item.text
     }
 
 private fun BigInteger.toJson() = JsonUnquotedLiteral(toString(10))

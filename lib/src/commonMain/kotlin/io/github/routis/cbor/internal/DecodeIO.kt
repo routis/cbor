@@ -1,7 +1,7 @@
 package io.github.routis.cbor.internal
 
 import io.github.routis.cbor.DataItem
-import io.github.routis.cbor.Key
+import io.github.routis.cbor.keyOf
 import kotlinx.io.*
 import kotlin.contracts.contract
 
@@ -113,7 +113,7 @@ private fun Source.readMap(size: Size): DataItem.CborMap {
     val items =
         buildMap {
             fun put(item: DataItem) {
-                val key = Key(item) ?: error("$item cannot be used as key")
+                val key = keyOf(item) ?: error("$item cannot be used as key")
                 check(!contains(key)) { "Duplicate $key" }
                 val value = readDataItem()
                 put(key, value)
