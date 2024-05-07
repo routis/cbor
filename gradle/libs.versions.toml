@@ -5,7 +5,7 @@ kotlinxKover = "0.7.6"
 kotlinxIo = "0.3.3"
 junit5 = "5.10.2"
 okio = "3.9.0"
-ktlint = "12.1.0"
+ktlint = "12.1.1"
 ionspinBignum = "0.3.9"
 
 [libraries]
