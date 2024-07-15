@@ -6,7 +6,7 @@ kotlinxIo = "0.5.0"
 junit5 = "5.10.3"
 okio = "3.9.0"
 ktlint = "12.1.1"
-ionspinBignum = "0.3.9"
+ionspinBignum = "0.3.10"
 
 [libraries]
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIo" }
