@@ -1,7 +1,7 @@
 [versions]
 kotlin = "1.9.25"
 kotlinxSerialization = "1.8.0"
-kotlinxKover = "0.9.0"
+kotlinxKover = "0.9.1"
 kotlinxIo = "0.6.0"
 junit5 = "5.11.4"
 okio = "3.9.1"
