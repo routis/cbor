@@ -4,7 +4,7 @@ kotlinxSerialization = "1.11.0"
 kotlinxKover = "0.9.9"
 kotlinxIo = "0.9.1"
 junit5 = "5.14.4"
-okio = "3.18.1"
+okio = "3.18.2"
 ktlint = "12.3.0"
 ionspinBignum = "0.3.10"
 
